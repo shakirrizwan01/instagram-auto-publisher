@@ -1,0 +1,31 @@
+name: Daily Instagram Auto Publisher
+
+on:
+  schedule:
+    # 18:00 IST is 12:30 UTC
+    # 19:30 IST is 14:00 UTC
+    - cron: '30 12 * * *'
+    - cron: '0 14 * * *'
+  workflow_dispatch:
+
+jobs:
+  publish-drop:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Auto Publisher
+        env:
+          COMPOSIO_API_KEY: ${{ secrets.COMPOSIO_API_KEY }}
+        run: python publish.py
