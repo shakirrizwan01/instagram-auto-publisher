@@ -56,7 +56,10 @@ print(f"Found post to publish! Row {target_row_idx}: Post {post_no} — '{title}
 print(f"Fetching S3 download URL from Google Drive for file ID {drive_file_id}...")
 drive_res = client.tools.execute(
     slug="GOOGLEDRIVE_DOWNLOAD_FILE",
-    arguments={"fileId": drive_file_id}
+    arguments={
+        "fileId": drive_file_id,
+        "account": "googledrive_eyey-perch"
+    }
 )
 s3url = drive_res.data.get("downloaded_file_content", {}).get("s3url")
 if not s3url:
