@@ -13,6 +13,7 @@ client = Composio(api_key=COMPOSIO_API_KEY)
 
 def execute_tool(slug, arguments, **kwargs):
     kwargs.setdefault("dangerously_skip_version_check", True)
+    kwargs.setdefault("user_id", "default")
     return client.tools.execute(slug=slug, arguments=arguments, **kwargs)
 
 def get_data(res):
