@@ -1,0 +1,39 @@
+name: Paradox Vault Daily Instagram Reels Publisher
+
+on:
+  schedule:
+    # 18:00 IST is 12:30 UTC
+    - cron: '30 12 * * *'
+  workflow_dispatch:
+    inputs:
+      target_row:
+        description: 'Specific row to publish (optional, e.g. 2)'
+        required: false
+        default: ''
+
+jobs:
+  publish-paradox-vault-ig:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          pip install --upgrade pip
+          pip install composio-core
+
+      - name: Run Instagram Reels Publisher
+        env:
+          COMPOSIO_API_KEY: ${{ secrets.COMPOSIO_API_KEY }}
+        run: |
+          if [ -n "${{ github.event.inputs.target_row }}" ]; then
+            python publish_paradox_vault_ig.py --row ${{ github.event.inputs.target_row }}
+          else
+            python publish_paradox_vault_ig.py
+          fi
