@@ -11,38 +11,56 @@ if not COMPOSIO_API_KEY:
 
 client = Composio(api_key=COMPOSIO_API_KEY)
 
-ACCOUNT_MAP = {
-    "GMAIL_SEND_EMAIL": "gmail_afoul-borean",
-    "GOOGLESHEETS_VALUES_GET": "googlesheets_agency-broo",
-    "GOOGLESHEETS_VALUES_UPDATE": "googlesheets_agency-broo",
-    "GOOGLEDRIVE_DOWNLOAD_FILE": "googledrive_eyey-perch",
-    "INSTAGRAM_POST_IG_USER_MEDIA": "instagram_looter-enlife",
-    "INSTAGRAM_POST_IG_USER_MEDIA_PUBLISH": "instagram_looter-enlife"
+# Map tool slug to toolkit name
+TOOLKIT_MAP = {
+    "GMAIL_SEND_EMAIL": "gmail",
+    "GOOGLESHEETS_VALUES_GET": "googlesheets",
+    "GOOGLESHEETS_VALUES_UPDATE": "googlesheets",
+    "GOOGLEDRIVE_DOWNLOAD_FILE": "googledrive",
+    "INSTAGRAM_POST_IG_USER_MEDIA": "instagram",
+    "INSTAGRAM_POST_IG_USER_MEDIA_PUBLISH": "instagram",
+    "FACEBOOK_CREATE_PAGE_FEED_POST": "facebook",
+    "YOUTUBE_VIDEOS_INSERT": "youtube"
 }
 
-USER_ID_CACHE = {}
+# Explicit connected account IDs in the Project (fallback)
+ACCOUNT_MAP = {
+    "gmail": "ca_xLZdOBRwIJLf",
+    "googlesheets": "ca_P5SOLNnc27rB",
+    "googledrive": "ca_o8MBz95otipG",
+    "instagram": "ca_dAL2HtP-8D0G",
+    "facebook": "ca_CRcdLr-bArog",
+    "youtube": "ca_pUUHcPX5WySk"
+}
 
-def get_user_id_for_account(account_id):
-    if account_id in USER_ID_CACHE:
-        return USER_ID_CACHE[account_id]
-    try:
-        acc = client.connected_accounts.get(account_id)
-        uid = getattr(acc, "user_id", None) or (acc.get("user_id") if isinstance(acc, dict) else None)
-        if uid:
-            USER_ID_CACHE[account_id] = uid
-            return uid
-    except Exception as e:
-        print(f"Warning: Could not fetch user_id for account {account_id}: {e}")
-    return "user_01KYRN0PJJTVJ9D4KV8RCV3HFM"
+USER_ID = "pg-test-e25f369f-1415-44b6-9106-f2d6e6f0b793"
+
+# Dynamically discover active accounts from Composio
+try:
+    resp = client.connected_accounts.list()
+    items = getattr(resp, "items", resp)
+    print(f"Discovered {len(items)} accounts from Composio.")
+    for a in items:
+        aid = getattr(a, "id", None) or (a.get("id") if isinstance(a, dict) else None)
+        tk = getattr(a, "toolkit", None) or (a.get("toolkit") if isinstance(a, dict) else None)
+        tk_slug = getattr(tk, "slug", tk) or (tk.get("slug") if isinstance(tk, dict) else tk)
+        uid = getattr(a, "user_id", None) or (a.get("user_id") if isinstance(a, dict) else None)
+        status = getattr(a, "status", None) or (a.get("status") if isinstance(a, dict) else None)
+        if status == "ACTIVE" and tk_slug and aid:
+            ACCOUNT_MAP[str(tk_slug).lower()] = aid
+            if uid:
+                USER_ID = uid
+    print("Active accounts mapped:", ACCOUNT_MAP)
+    print("Active user_id:", USER_ID)
+except Exception as e:
+    print("Dynamic discovery warning (using static fallback):", e)
 
 def execute_tool(slug, arguments, **kwargs):
     kwargs.setdefault("dangerously_skip_version_check", True)
-    if slug in ACCOUNT_MAP:
-        acc_id = ACCOUNT_MAP[slug]
-        kwargs.setdefault("connected_account_id", acc_id)
-        uid = get_user_id_for_account(acc_id)
-        if uid:
-            kwargs.setdefault("user_id", uid)
+    kwargs.setdefault("user_id", USER_ID)
+    toolkit = TOOLKIT_MAP.get(slug)
+    if toolkit and toolkit in ACCOUNT_MAP:
+        kwargs.setdefault("connected_account_id", ACCOUNT_MAP[toolkit])
     return client.tools.execute(slug=slug, arguments=arguments, **kwargs)
 
 def get_data(res):
@@ -55,15 +73,6 @@ test_email_only = os.environ.get("TEST_EMAIL_ONLY", "false").lower() == "true" o
 if test_email_only:
     print("🧪 TEST MODE: Sending drop alert test email from GitHub Actions cloud runner...")
     try:
-        acc_id = ACCOUNT_MAP["GMAIL_SEND_EMAIL"]
-        try:
-            acc = client.connected_accounts.get(acc_id)
-            print("Connected account info:", acc)
-            uid = getattr(acc, "user_id", None)
-            print("Account user_id:", uid)
-        except Exception as e:
-            print("Connected account lookup error:", e)
-
         email_res = execute_tool(
             slug="GMAIL_SEND_EMAIL",
             arguments={
