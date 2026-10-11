@@ -20,10 +20,29 @@ ACCOUNT_MAP = {
     "INSTAGRAM_POST_IG_USER_MEDIA_PUBLISH": "instagram_looter-enlife"
 }
 
+USER_ID_CACHE = {}
+
+def get_user_id_for_account(account_id):
+    if account_id in USER_ID_CACHE:
+        return USER_ID_CACHE[account_id]
+    try:
+        acc = client.connected_accounts.get(account_id)
+        uid = getattr(acc, "user_id", None) or (acc.get("user_id") if isinstance(acc, dict) else None)
+        if uid:
+            USER_ID_CACHE[account_id] = uid
+            return uid
+    except Exception as e:
+        print(f"Warning: Could not fetch user_id for account {account_id}: {e}")
+    return "user_01KYRN0PJJTVJ9D4KV8RCV3HFM"
+
 def execute_tool(slug, arguments, **kwargs):
     kwargs.setdefault("dangerously_skip_version_check", True)
     if slug in ACCOUNT_MAP:
-        kwargs.setdefault("connected_account_id", ACCOUNT_MAP[slug])
+        acc_id = ACCOUNT_MAP[slug]
+        kwargs.setdefault("connected_account_id", acc_id)
+        uid = get_user_id_for_account(acc_id)
+        if uid:
+            kwargs.setdefault("user_id", uid)
     return client.tools.execute(slug=slug, arguments=arguments, **kwargs)
 
 def get_data(res):
@@ -36,6 +55,15 @@ test_email_only = os.environ.get("TEST_EMAIL_ONLY", "false").lower() == "true" o
 if test_email_only:
     print("🧪 TEST MODE: Sending drop alert test email from GitHub Actions cloud runner...")
     try:
+        acc_id = ACCOUNT_MAP["GMAIL_SEND_EMAIL"]
+        try:
+            acc = client.connected_accounts.get(acc_id)
+            print("Connected account info:", acc)
+            uid = getattr(acc, "user_id", None)
+            print("Account user_id:", uid)
+        except Exception as e:
+            print("Connected account lookup error:", e)
+
         email_res = execute_tool(
             slug="GMAIL_SEND_EMAIL",
             arguments={
