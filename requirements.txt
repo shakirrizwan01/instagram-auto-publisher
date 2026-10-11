@@ -1,2 +1,2 @@
-composio-core>=0.6.0
+composio>=0.8.0
 requests>=2.31.0

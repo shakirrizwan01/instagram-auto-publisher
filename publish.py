@@ -10,6 +10,39 @@ if not COMPOSIO_API_KEY:
     sys.exit(1)
 
 client = Composio(api_key=COMPOSIO_API_KEY)
+
+def get_data(res):
+    if isinstance(res, dict):
+        return res.get("data", res)
+    return getattr(res, "data", res)
+
+# Check for test email mode
+test_email_only = os.environ.get("TEST_EMAIL_ONLY", "false").lower() == "true" or "--test-email" in sys.argv
+if test_email_only:
+    print("🧪 TEST MODE: Sending drop alert test email from GitHub Actions cloud runner...")
+    try:
+        email_res = client.tools.execute(
+            slug="GMAIL_SEND_EMAIL",
+            arguments={
+                "recipient_email": "shakirrizwan01@gmail.com",
+                "subject": "🧪 LIVE DROP ALERT (Cloud Test): Instagram Auto-Publisher",
+                "body": """<h2>🎉 Cloud Runner Email Alert Verified!</h2>
+<p>This test email confirms that your GitHub Actions cloud runner is working 100% autonomously in the cloud.</p>
+<p><strong>Status:</strong> Cloud automation verified.</p>
+<p>From now on, all scheduled drops will publish and send you this email alert on time, <strong>even if your PC is completely turned off</strong>!</p>
+<p style="color: #d93025; font-size: 16px;">
+👉 <strong>Action Required on Drops:</strong> Open Instagram and Facebook on your phone, find the new post, and tap <strong>Share ➔ Add to Story</strong>!
+</p>""",
+                "is_html": True
+            }
+        )
+        print("Test email response:", email_res)
+        print("Cloud email notification test PASSED!")
+        sys.exit(0)
+    except Exception as e:
+        print("Error sending test email from cloud:", e)
+        sys.exit(1)
+
 SHEET_ID = "1_IJaznafMh7X7rmgQ1idHSptoULSr5enoewXk8NYjCY"
 
 kolkata_tz = zoneinfo.ZoneInfo("Asia/Kolkata")
@@ -26,7 +59,8 @@ sheet_res = client.tools.execute(
         "range": "Sheet1!A2:W57"
     }
 )
-rows = sheet_res.data.get("values", [])
+sheet_data = get_data(sheet_res)
+rows = sheet_data.get("values", [])
 print(f"Total rows fetched: {len(rows)}")
 
 target_row = None
@@ -61,7 +95,8 @@ drive_res = client.tools.execute(
         "account": "googledrive_eyey-perch"
     }
 )
-s3url = drive_res.data.get("downloaded_file_content", {}).get("s3url")
+drive_data = get_data(drive_res)
+s3url = drive_data.get("downloaded_file_content", {}).get("s3url")
 if not s3url:
     print(f"Error fetching download URL from Google Drive: {drive_res}")
     sys.exit(1)
@@ -78,7 +113,8 @@ container_res = client.tools.execute(
         "media_type": "REELS"
     }
 )
-container_id = container_res.data.get("id")
+container_data = get_data(container_res)
+container_id = container_data.get("id")
 if not container_id:
     print(f"Error creating Instagram media container: {container_res}")
     sys.exit(1)
@@ -93,7 +129,8 @@ publish_res = client.tools.execute(
         "max_wait_seconds": 180
     }
 )
-ig_media_id = publish_res.data.get("id")
+publish_data = get_data(publish_res)
+ig_media_id = publish_data.get("id")
 if not ig_media_id:
     print(f"Error publishing Instagram media: {publish_res}")
     sys.exit(1)

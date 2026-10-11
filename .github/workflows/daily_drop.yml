@@ -7,6 +7,12 @@ on:
     - cron: '30 12 * * *'
     - cron: '0 14 * * *'
   workflow_dispatch:
+    inputs:
+      test_email_only:
+        description: 'Send test email alert only'
+        required: false
+        default: 'false'
+        type: boolean
 
 jobs:
   publish-drop:
@@ -28,4 +34,5 @@ jobs:
       - name: Run Auto Publisher
         env:
           COMPOSIO_API_KEY: ${{ secrets.COMPOSIO_API_KEY }}
+          TEST_EMAIL_ONLY: ${{ github.event.inputs.test_email_only || 'false' }}
         run: python publish.py
