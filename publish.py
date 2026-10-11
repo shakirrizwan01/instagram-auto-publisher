@@ -11,6 +11,10 @@ if not COMPOSIO_API_KEY:
 
 client = Composio(api_key=COMPOSIO_API_KEY)
 
+def execute_tool(slug, arguments, **kwargs):
+    kwargs.setdefault("dangerously_skip_version_check", True)
+    return client.tools.execute(slug=slug, arguments=arguments, **kwargs)
+
 def get_data(res):
     if isinstance(res, dict):
         return res.get("data", res)
@@ -21,7 +25,7 @@ test_email_only = os.environ.get("TEST_EMAIL_ONLY", "false").lower() == "true" o
 if test_email_only:
     print("🧪 TEST MODE: Sending drop alert test email from GitHub Actions cloud runner...")
     try:
-        email_res = client.tools.execute(
+        email_res = execute_tool(
             slug="GMAIL_SEND_EMAIL",
             arguments={
                 "recipient_email": "shakirrizwan01@gmail.com",
@@ -52,7 +56,7 @@ time_str = now_ist.strftime("%H:%M")
 
 print(f"Running Instagram Auto Publisher at {now_ist} (Date: {today_str}, Time: {time_str} IST)")
 
-sheet_res = client.tools.execute(
+sheet_res = execute_tool(
     slug="GOOGLESHEETS_VALUES_GET",
     arguments={
         "spreadsheet_id": SHEET_ID,
@@ -88,7 +92,7 @@ drive_file_id = target_row[18]
 print(f"Found post to publish! Row {target_row_idx}: Post {post_no} — '{title}'")
 
 print(f"Fetching S3 download URL from Google Drive for file ID {drive_file_id}...")
-drive_res = client.tools.execute(
+drive_res = execute_tool(
     slug="GOOGLEDRIVE_DOWNLOAD_FILE",
     arguments={
         "fileId": drive_file_id,
@@ -104,7 +108,7 @@ if not s3url:
 print("Video download URL acquired successfully.")
 
 print("Creating Instagram media container...")
-container_res = client.tools.execute(
+container_res = execute_tool(
     slug="INSTAGRAM_POST_IG_USER_MEDIA",
     arguments={
         "ig_user_id": "me",
@@ -121,7 +125,7 @@ if not container_id:
 
 print(f"Container created successfully. ID: {container_id}. Publishing...")
 
-publish_res = client.tools.execute(
+publish_res = execute_tool(
     slug="INSTAGRAM_POST_IG_USER_MEDIA_PUBLISH",
     arguments={
         "ig_user_id": "me",
@@ -138,7 +142,7 @@ if not ig_media_id:
 print(f"🎉 Successfully published to Instagram! Media ID: {ig_media_id}")
 
 print(f"Updating Google Sheet Row {target_row_idx}...")
-client.tools.execute(
+execute_tool(
     slug="GOOGLESHEETS_VALUES_UPDATE",
     arguments={
         "spreadsheet_id": SHEET_ID,
@@ -150,7 +154,7 @@ client.tools.execute(
 
 print("Sending drop alert email to shakirrizwan01@gmail.com...")
 try:
-    client.tools.execute(
+    execute_tool(
         slug="GMAIL_SEND_EMAIL",
         arguments={
             "recipient_email": "shakirrizwan01@gmail.com",
