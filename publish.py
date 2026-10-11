@@ -11,9 +11,19 @@ if not COMPOSIO_API_KEY:
 
 client = Composio(api_key=COMPOSIO_API_KEY)
 
+ACCOUNT_MAP = {
+    "GMAIL_SEND_EMAIL": "gmail_afoul-borean",
+    "GOOGLESHEETS_VALUES_GET": "googlesheets_agency-broo",
+    "GOOGLESHEETS_VALUES_UPDATE": "googlesheets_agency-broo",
+    "GOOGLEDRIVE_DOWNLOAD_FILE": "googledrive_eyey-perch",
+    "INSTAGRAM_POST_IG_USER_MEDIA": "instagram_looter-enlife",
+    "INSTAGRAM_POST_IG_USER_MEDIA_PUBLISH": "instagram_looter-enlife"
+}
+
 def execute_tool(slug, arguments, **kwargs):
     kwargs.setdefault("dangerously_skip_version_check", True)
-    kwargs.setdefault("user_id", "default")
+    if slug in ACCOUNT_MAP:
+        kwargs.setdefault("connected_account_id", ACCOUNT_MAP[slug])
     return client.tools.execute(slug=slug, arguments=arguments, **kwargs)
 
 def get_data(res):
@@ -96,8 +106,7 @@ print(f"Fetching S3 download URL from Google Drive for file ID {drive_file_id}..
 drive_res = execute_tool(
     slug="GOOGLEDRIVE_DOWNLOAD_FILE",
     arguments={
-        "fileId": drive_file_id,
-        "account": "googledrive_eyey-perch"
+        "fileId": drive_file_id
     }
 )
 drive_data = get_data(drive_res)
