@@ -79,7 +79,7 @@ def main():
             break
 
     if not target_row:
-        for idx, row in enumerate(sys.argv):
+        for idx, row in enumerate(rows):
             post_date = row[1] if len(row) > 1 else ""
             ig_status = row[14] if len(row) > 14 else "pending"
 
@@ -96,7 +96,7 @@ def main():
     title = target_row[4]
     category = target_row[5]
     drive_file_id = target_row[6]
-    caption_ig = row[8]
+    caption_ig = target_row[8]
     first_comment = target_row[11] if len(target_row) > 11 else ""
 
     print(f"\n🚀 Launching Slot #{post_no}: '{title}' [{category}]")
@@ -122,7 +122,7 @@ def main():
     container_res = execute_tool(
         slug="INSTAGRAM_POST_IG_USER_MEDIA",
         arguments={
-            "ig_user_id": "me",
+            "ig_user_id": "39170856485894595",
             "video_url": s3url,
             "caption": caption_ig,
             "media_type": "REELS"
@@ -141,7 +141,7 @@ def main():
     publish_res = execute_tool(
         slug="INSTAGRAM_POST_IG_USER_MEDIA_PUBLISH",
         arguments={
-            "ig_user_id": "me",
+            "ig_user_id": "39170856485894595",
             "creation_id": container_id,
             "max_wait_seconds": 180
         }
