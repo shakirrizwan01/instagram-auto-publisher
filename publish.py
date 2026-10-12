@@ -19,7 +19,9 @@ TOOLKIT_MAP = {
     "GOOGLEDRIVE_DOWNLOAD_FILE": "googledrive",
     "INSTAGRAM_POST_IG_USER_MEDIA": "instagram",
     "INSTAGRAM_POST_IG_USER_MEDIA_PUBLISH": "instagram",
+    "INSTAGRAM_POST_IG_MEDIA_COMMENTS": "instagram",
     "FACEBOOK_CREATE_PAGE_FEED_POST": "facebook",
+    "FACEBOOK_CREATE_COMMENT": "facebook",
     "YOUTUBE_VIDEOS_INSERT": "youtube"
 }
 
@@ -123,19 +125,29 @@ for idx, row in enumerate(rows):
     post_time = row[4] if len(row) > 4 else ""
     ig_status = row[21] if len(row) > 21 else "pending"
 
-    if post_date == today_str and ig_status.strip().lower() == "pending":
+    # Only publish if date is today and scheduled time has arrived (or backlog from past date)
+    is_due = False
+    if ig_status.strip().lower() == "pending":
+        if post_date == today_str and time_str >= post_time:
+            is_due = True
+        elif post_date < today_str and post_date != "":
+            is_due = True
+
+    if is_due:
         target_row = row
         target_row_idx = idx + 2
         break
 
 if not target_row:
-    print(f"No pending Instagram post found for today ({today_str}). Exiting cleanly.")
+    print(f"No pending Instagram post due for today ({today_str} {time_str} IST). Exiting cleanly.")
     sys.exit(0)
 
 post_no = target_row[0]
 title = target_row[7]
 caption_ig = target_row[15]
+first_comment = target_row[16] if len(target_row) > 16 else ""
 drive_file_id = target_row[18]
+fb_post_id = target_row[20] if len(target_row) > 20 else ""
 
 print(f"Found post to publish! Row {target_row_idx}: Post {post_no} — '{title}'")
 
@@ -188,6 +200,40 @@ if not ig_media_id:
 
 print(f"🎉 Successfully published to Instagram! Media ID: {ig_media_id}")
 
+# Post first comment on Instagram Reel
+if first_comment and first_comment.strip():
+    print(f"Posting first comment to Instagram Reel {ig_media_id}...")
+    try:
+        clean_comment = first_comment.replace("[YouTube] (", "YouTube: ").replace(")", "")
+        ig_comment_res = execute_tool(
+            slug="INSTAGRAM_POST_IG_MEDIA_COMMENTS",
+            arguments={
+                "ig_media_id": str(ig_media_id),
+                "message": clean_comment
+            }
+        )
+        print("Instagram first comment posted successfully:", ig_comment_res)
+    except Exception as e:
+        print("Warning: Failed to post first comment to Instagram:", e)
+
+# Post first comment on Facebook Post if live
+if fb_post_id and fb_post_id.strip() and first_comment and first_comment.strip():
+    print(f"Posting first comment to Facebook post {fb_post_id}...")
+    try:
+        target_fb_id = fb_post_id.strip()
+        if "_" not in target_fb_id and not target_fb_id.startswith("202789806432686"):
+            target_fb_id = f"202789806432686_{target_fb_id}"
+        fb_comment_res = execute_tool(
+            slug="FACEBOOK_CREATE_COMMENT",
+            arguments={
+                "object_id": target_fb_id,
+                "message": first_comment
+            }
+        )
+        print("Facebook first comment posted successfully:", fb_comment_res)
+    except Exception as e:
+        print("Warning: Failed to post first comment to Facebook:", e)
+
 print(f"Updating Google Sheet Row {target_row_idx}...")
 execute_tool(
     slug="GOOGLESHEETS_VALUES_UPDATE",
@@ -209,6 +255,9 @@ try:
             "body": f'''<h2>🎉 New Post is LIVE on Instagram & Facebook!</h2>
 <p><strong>Track:</strong> {title}</p>
 <p><strong>Instagram Media ID:</strong> {ig_media_id}</p>
+<p style="color: #1a73e8; font-size: 15px;">
+📌 <strong>First Comment Posted:</strong> The first comment with your YouTube & Spotify links was posted automatically to both Instagram and Facebook. Open the apps and tap <strong>Pin to top 📌</strong>.
+</p>
 <p style="color: #d93025; font-size: 16px;">
 👉 <strong>Action Required:</strong> Open Instagram and Facebook on your phone, find this new post, and tap <strong>Share ➔ Add to Story</strong>!
 </p>''',
