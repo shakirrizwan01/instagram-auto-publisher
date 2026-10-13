@@ -29,7 +29,7 @@ TOOLKIT_MAP = {
 ACCOUNT_MAP = {
     "gmail": "ca_xLZdOBRwIJLf",
     "googlesheets": "ca_P5SOLNnc27rB",
-    "googledrive": "ca_o8MBz95otipG",
+    "googledrive": "googledrive_eyey-perch",
     "instagram": "ca_dAL2HtP-8D0G",
     "facebook": "ca_CRcdLr-bArog",
     "youtube": "ca_pUUHcPX5WySk"
@@ -58,7 +58,7 @@ except Exception as e:
     print("Dynamic discovery warning (using static fallback):", e)
 
 def execute_tool(slug, arguments, **kwargs):
-    kwargs.setdefault("dangerously_skip_version_check", True)
+    # kwargs.setdefault("dangerously_skip_version_check", True)
     kwargs.setdefault("user_id", USER_ID)
     toolkit = TOOLKIT_MAP.get(slug)
     if toolkit and toolkit in ACCOUNT_MAP:

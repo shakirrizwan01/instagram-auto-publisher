@@ -2,8 +2,8 @@ name: Paradox Vault Daily Instagram Reels Publisher
 
 on:
   schedule:
-    # 18:00 IST is 12:30 UTC
-    - cron: '30 12 * * *'
+    # 17:55 IST is 12:25 UTC (offset to avoid cron collisions)
+    - cron: '25 12 * * *'
   workflow_dispatch:
     inputs:
       target_row:
@@ -26,7 +26,7 @@ jobs:
       - name: Install Dependencies
         run: |
           pip install --upgrade pip
-          pip install composio-core
+          pip install -r requirements.txt
 
       - name: Run Instagram Reels Publisher
         env:

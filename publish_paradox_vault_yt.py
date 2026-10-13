@@ -36,11 +36,16 @@ SHEET_ID = "1UTtsb83Od3wM-d5B6er9fdpczS38roLGzMjygJqSsac" # Paradox Vault Master
 CHANNEL_ID = "UCSk1CAYFu0rcvtjlvZBVMPQ"
 
 def execute_tool(slug, arguments, **kwargs):
-    kwargs.setdefault("dangerously_skip_version_check", True)
     toolkit = TOOLKIT_MAP.get(slug)
+    call_kwargs = {}
     if toolkit and toolkit in ACCOUNT_MAP:
-        kwargs.setdefault("connected_account_id", ACCOUNT_MAP[toolkit])
-    return client.tools.execute(slug=slug, arguments=arguments, **kwargs)
+        call_kwargs["connected_account_id"] = ACCOUNT_MAP[toolkit]
+    if hasattr(client, "tools") and hasattr(client.tools, "execute"):
+        return client.tools.execute(slug=slug, arguments=arguments, **call_kwargs)
+    elif hasattr(client, "actions") and hasattr(client.actions, "execute"):
+        return client.actions.execute(action=slug, params=arguments, **call_kwargs)
+    else:
+        raise RuntimeError("No valid execution method found on Composio client")
 
 def get_data(res):
     if isinstance(res, dict):
