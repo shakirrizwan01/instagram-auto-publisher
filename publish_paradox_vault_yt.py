@@ -19,7 +19,7 @@ client = Composio(api_key=COMPOSIO_API_KEY)
 ACCOUNT_MAP = {
     "googledrive": "googledrive_balija-colley",   # rizwanshakir2025@gmail.com (FINAL videos)
     "googlesheets": "googlesheets_agency-broo",   # shakirrizwan01@gmail.com
-    "youtube": "youtube_pariti-boo",             # Paradox Vault YouTube (@paradoxvaultmedia / UCSk1CAYFu0rcvtjlvZBVMPQ)
+    "youtube": "ca_1OmWac-CLp-J",             # Paradox Vault YouTube (@paradoxvaultmedia / UCSk1CAYFu0rcvtjlvZBVMPQ)
     "gmail": "gmail_afoul-borean"                 # shakirrizwan01@gmail.com
 }
 
@@ -40,9 +40,17 @@ def execute_tool(slug, arguments, **kwargs):
     call_kwargs = {}
     if toolkit and toolkit in ACCOUNT_MAP:
         call_kwargs["connected_account_id"] = ACCOUNT_MAP[toolkit]
+    if toolkit == "youtube":
+        call_kwargs["user_id"] = "pg-test-e25f369f-1415-44b6-9106-f2d6e6f0b793"
+        call_kwargs["dangerously_skip_version_check"] = True
     if hasattr(client, "tools") and hasattr(client.tools, "execute"):
-        return client.tools.execute(slug=slug, arguments=arguments, **call_kwargs)
+        try:
+            return client.tools.execute(slug=slug, arguments=arguments, **call_kwargs)
+        except TypeError:
+            call_kwargs.pop("dangerously_skip_version_check", None)
+            return client.tools.execute(slug=slug, arguments=arguments, **call_kwargs)
     elif hasattr(client, "actions") and hasattr(client.actions, "execute"):
+        call_kwargs.pop("dangerously_skip_version_check", None)
         return client.actions.execute(action=slug, params=arguments, **call_kwargs)
     else:
         raise RuntimeError("No valid execution method found on Composio client")
