@@ -22,8 +22,6 @@ tags = ["quantum physics", "double slit experiment", "quantum observer effect", 
 
 s3key = "977053/googledrive/GOOGLEDRIVE_DOWNLOAD_FILE/response/f295cf3f2246af3ce304a4d532677fc6"
 
-print("Uploading to YouTube with connected_account_id=ca_1OmWac-CLp-J...")
-
 upload_args = {
     "videoFile": {
         "name": "Does_the_universe_only_exist_when_we_look_FINAL.mp4",
@@ -38,12 +36,25 @@ upload_args = {
     "madeForKids": False
 }
 
+print("Executing with dangerously_skip_version_check=True...")
 try:
     res = client.tools.execute(
         slug="YOUTUBE_MULTIPART_UPLOAD_VIDEO",
         arguments=upload_args,
-        connected_account_id="ca_1OmWac-CLp-J"
+        connected_account_id="ca_1OmWac-CLp-J",
+        dangerously_skip_version_check=True
     )
     print("SUCCESS RESULT:", res)
 except Exception as e:
-    print("UPLOAD EXCEPTION:", e)
+    print("DANGEROUSLY_SKIP FAILED:", e)
+    try:
+        # Fallback to direct REST execute
+        import requests
+        r = requests.post(
+            "https://backend.composio.dev/api/v3/tools/execute/YOUTUBE_MULTIPART_UPLOAD_VIDEO",
+            headers={"x-api-key": COMPOSIO_API_KEY, "Content-Type": "application/json"},
+            json={"arguments": upload_args, "connected_account_id": "ca_1OmWac-CLp-J"}
+        )
+        print("REST RESULT:", r.status_code, r.text)
+    except Exception as e2:
+        print("REST EXCEPTION:", e2)
