@@ -36,25 +36,17 @@ upload_args = {
     "madeForKids": False
 }
 
-print("Executing with dangerously_skip_version_check=True...")
+user_id = "pg-test-e25f369f-1415-44b6-9106-f2d6e6f0b793"
+
+print(f"Executing with user_id={user_id} and connected_account_id=ca_1OmWac-CLp-J...")
 try:
     res = client.tools.execute(
         slug="YOUTUBE_MULTIPART_UPLOAD_VIDEO",
         arguments=upload_args,
+        user_id=user_id,
         connected_account_id="ca_1OmWac-CLp-J",
         dangerously_skip_version_check=True
     )
     print("SUCCESS RESULT:", res)
 except Exception as e:
-    print("DANGEROUSLY_SKIP FAILED:", e)
-    try:
-        # Fallback to direct REST execute
-        import requests
-        r = requests.post(
-            "https://backend.composio.dev/api/v3/tools/execute/YOUTUBE_MULTIPART_UPLOAD_VIDEO",
-            headers={"x-api-key": COMPOSIO_API_KEY, "Content-Type": "application/json"},
-            json={"arguments": upload_args, "connected_account_id": "ca_1OmWac-CLp-J"}
-        )
-        print("REST RESULT:", r.status_code, r.text)
-    except Exception as e2:
-        print("REST EXCEPTION:", e2)
+    print("UPLOAD EXCEPTION:", e)
