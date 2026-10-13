@@ -26,77 +26,40 @@ except Exception as e:
 
 print(f"Using user_id: {user_id}")
 
-CLIENT_ID = "715668673207-pthq2eqm33ct79e294cl1oiguh09835o.apps.googleusercontent.com"
-CLIENT_SECRET = os.environ.get("CLIENT_SECRET", "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")
+target_auth_config_id = "ac_HRZnOyymlE43" # The created custom auth config for Antigravity
 
-# 2. Check existing auth configs for YouTube
-target_auth_config_id = None
-try:
-    resp = client.auth_configs.list(toolkit_slug="youtube")
-    items = getattr(resp, "items", []) or (resp.get("items", []) if isinstance(resp, dict) else [])
-    print(f"Found {len(items)} auth configs for YouTube:")
-    for ac in items:
-        acid = getattr(ac, "id", None) or (ac.get("id") if isinstance(ac, dict) else None)
-        name = getattr(ac, "name", None) or (ac.get("name") if isinstance(ac, dict) else None)
-        is_managed = getattr(ac, "is_composio_managed", None) or (ac.get("is_composio_managed") if isinstance(ac, dict) else None)
-        print(f"  Auth Config ID: {acid} | Name: {name} | Managed: {is_managed}")
-        if not is_managed:
-            target_auth_config_id = acid
-            print(f"--> Using existing custom auth config: {target_auth_config_id}")
-except Exception as e:
-    print("Warning listing auth configs:", e)
-
-# 3. If no custom auth config exists, create it
-if not target_auth_config_id:
-    print("Creating new custom Auth Config for YouTube...")
-    try:
-        r = requests.post(
-            "https://backend.composio.dev/api/v3/auth_configs",
-            headers={"x-api-key": COMPOSIO_API_KEY, "Content-Type": "application/json"},
-            json={
-                "toolkit": {"slug": "youtube"},
-                "auth_config": {
-                    "name": "Antigravity YouTube Custom App",
-                    "type": "use_custom_auth",
-                    "authScheme": "OAUTH2",
-                    "credentials": {
-                        "client_id": CLIENT_ID,
-                        "client_secret": CLIENT_SECRET
-                    }
-                }
-            }
-        )
-        print("Create auth config status:", r.status_code, r.text)
-        if r.status_code in [200, 201]:
-            data = r.json()
-            target_auth_config_id = data.get("auth_config", {}).get("id") or data.get("id")
-            print(f"🎉 Created custom Auth Config: {target_auth_config_id}")
-    except Exception as e:
-        print(f"Error creating auth config via requests: {e}")
-
-if not target_auth_config_id:
-    print("❌ Failed to obtain target_auth_config_id")
-    sys.exit(1)
-
-# 4. Initiate connection request using the custom auth config!
 print(f"Initiating connection with auth_config_id: {target_auth_config_id}...")
+
+# Format 1: SDK initiate
 try:
-    r = requests.post(
-        "https://backend.composio.dev/api/v3/connected_accounts",
-        headers={"x-api-key": COMPOSIO_API_KEY, "Content-Type": "application/json"},
-        json={
-            "user_id": user_id,
-            "auth_config_id": target_auth_config_id
-        }
-    )
-    print("Initiate response status:", r.status_code, r.text)
+    req = client.connected_accounts.initiate(user_id=user_id, auth_config_id=target_auth_config_id)
+    redir = getattr(req, "redirect_url", None) or getattr(req, "redirectUrl", None)
+    cid = getattr(req, "id", None)
+    if redir:
+        print("\n" + "="*60)
+        print(f"CUSTOM_AUTH_LINK: {redir}")
+        print(f"CONNECTION_ID: {cid}")
+        print("="*60 + "\n")
+        sys.exit(0)
+except Exception as e:
+    print(f"SDK initiate notice: {e}")
+
+# Format 2: Direct REST with proper nested body
+payload = {
+    "auth_config": {"id": target_auth_config_id},
+    "connection": {"user_id": user_id}
+}
+r = requests.post(
+    "https://backend.composio.dev/api/v3/connected_accounts",
+    headers={"x-api-key": COMPOSIO_API_KEY, "Content-Type": "application/json"},
+    json=payload
+)
+print("Initiate response status:", r.status_code, r.text)
+if r.status_code in [200, 201]:
     res_json = r.json()
-    redirect_url = res_json.get("redirect_url") or res_json.get("redirectUrl") or res_json.get("connection_data", {}).get("redirect_url")
-    connection_id = res_json.get("id") or res_json.get("connected_account_id")
+    redirect_url = res_json.get("redirect_url") or res_json.get("redirectUrl") or (res_json.get("connection") or {}).get("redirect_url") or (res_json.get("connection_data") or {}).get("redirect_url")
+    connection_id = res_json.get("id") or (res_json.get("connection") or {}).get("id")
     print("\n" + "="*60)
     print(f"CUSTOM_AUTH_LINK: {redirect_url}")
     print(f"CONNECTION_ID: {connection_id}")
     print("="*60 + "\n")
-except Exception as e:
-    print(f"Error initiating connection: {e}")
-    sys.exit(1)
