@@ -1,0 +1,32 @@
+name: Setup Custom YouTube Auth Config
+
+on:
+  workflow_dispatch:
+    inputs:
+      client_secret:
+        description: 'Client Secret override'
+        required: false
+        default: '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'
+
+jobs:
+  setup-youtube-oauth:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Setup Custom YouTube
+        env:
+          COMPOSIO_API_KEY: ${{ secrets.COMPOSIO_API_KEY }}
+          CLIENT_SECRET: ${{ github.event.inputs.client_secret || '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' }}
+        run: python setup_custom_youtube.py
