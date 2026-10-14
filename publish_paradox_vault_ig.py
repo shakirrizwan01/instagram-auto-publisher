@@ -6,7 +6,7 @@ import zoneinfo
 from composio import Composio
 
 # ==========================================
-# CONFIGURATION & ACCOUNT DISCOVERY
+# CONFIGURATION & ACCOUNT MAPPINGS
 # ==========================================
 COMPOSIO_API_KEY = os.environ.get("COMPOSIO_API_KEY")
 if not COMPOSIO_API_KEY:
@@ -21,19 +21,20 @@ TOOLKIT_MAP = {
     "GOOGLESHEETS_VALUES_UPDATE": "googlesheets",
     "INSTAGRAM_POST_IG_USER_MEDIA": "instagram",
     "INSTAGRAM_POST_IG_USER_MEDIA_PUBLISH": "instagram",
+    "INSTAGRAM_POST_IG_MEDIA_COMMENTS": "instagram",
     "GMAIL_SEND_EMAIL": "gmail"
 }
 
-# Static fallbacks
+# Dedicated account IDs for Paradox Vault
 ACCOUNT_MAP = {
-    "googledrive": "ca_o8MBz95otipG",
-    "googlesheets": "ca_P5SOLNnc27rB",
-    "instagram": "ca_dAL2HtP-8D0G",
-    "gmail": "ca_xLZdOBRwIJLf"
+    "googledrive": "ca_o8MBz95otipG",             # Fallback active Google Drive
+    "googlesheets": "ca_P5SOLNnc27rB",             # shakirrizwan01@gmail.com
+    "instagram": "instagram_ossify-requit",        # Paradox Vault Instagram (@paradoxvaultmedia)
+    "gmail": "ca_xLZdOBRwIJLf"                     # shakirrizwan01@gmail.com
 }
 USER_ID = "pg-test-e25f369f-1415-44b6-9106-f2d6e6f0b793"
 
-# Dynamically discover active accounts and user_id from Composio
+# Dynamically discover active accounts from Composio
 try:
     resp = client.connected_accounts.list()
     items = getattr(resp, "items", resp)
@@ -45,9 +46,14 @@ try:
         uid = getattr(a, "user_id", None) or (a.get("user_id") if isinstance(a, dict) else None)
         status = getattr(a, "status", None) or (a.get("status") if isinstance(a, dict) else None)
         if status == "ACTIVE" and tk_slug and aid:
-            ACCOUNT_MAP[str(tk_slug).lower()] = aid
+            tk_name = str(tk_slug).lower()
+            # Do not overwrite dedicated Paradox Vault accounts
+            if tk_name not in ["instagram"]:
+                ACCOUNT_MAP[tk_name] = aid
             if uid:
                 USER_ID = uid
+    # Enforce Paradox Vault dedicated Instagram account
+    ACCOUNT_MAP["instagram"] = "instagram_ossify-requit"
     print("Active accounts mapped:", ACCOUNT_MAP)
     print("Active user_id:", USER_ID)
 except Exception as e:
@@ -187,6 +193,21 @@ def main():
         sys.exit(1)
 
     print(f"Successfully published to Instagram! Media ID: {ig_media_id}")
+
+    # 4b. Post First Comment
+    if first_comment and first_comment.strip():
+        print(f"Posting first comment to Instagram Reel {ig_media_id}...")
+        try:
+            ig_comment_res = execute_tool(
+                slug="INSTAGRAM_POST_IG_MEDIA_COMMENTS",
+                arguments={
+                    "ig_media_id": str(ig_media_id),
+                    "message": first_comment.strip()
+                }
+            )
+            print("Instagram first comment posted successfully:", ig_comment_res)
+        except Exception as e:
+            print("Warning: Failed to post first comment to Instagram:", e)
 
     # 5. Update Master Google Sheet Status
     print(f"Updating Google Sheet Row {target_row_idx}...")
