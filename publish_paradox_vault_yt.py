@@ -7,7 +7,7 @@ import zoneinfo
 from composio import Composio
 
 # ==========================================
-# CONFIGURATION & ACCOUNT MAPPINGS
+# CONFIGURATION & ACCOUNT DISCOVERY
 # ==========================================
 COMPOSIO_API_KEY = os.environ.get("COMPOSIO_API_KEY")
 if not COMPOSIO_API_KEY:
@@ -15,15 +15,6 @@ if not COMPOSIO_API_KEY:
     sys.exit(1)
 
 client = Composio(api_key=COMPOSIO_API_KEY)
-
-USER_ID = "pg-test-e25f369f-1415-44b6-9106-f2d6e6f0b793"
-
-ACCOUNT_MAP = {
-    "googledrive": "googledrive_balija-colley",   # rizwanshakir2025@gmail.com (FINAL videos)
-    "googlesheets": "googlesheets_agency-broo",   # shakirrizwan01@gmail.com
-    "youtube": "ca_1OmWac-CLp-J",             # Paradox Vault Dedicated YouTube OAuth Account
-    "gmail": "gmail_afoul-borean"                 # shakirrizwan01@gmail.com
-}
 
 TOOLKIT_MAP = {
     "GOOGLEDRIVE_DOWNLOAD_FILE": "googledrive",
@@ -33,6 +24,37 @@ TOOLKIT_MAP = {
     "YOUTUBE_POST_COMMENT": "youtube",
     "GMAIL_SEND_EMAIL": "gmail"
 }
+
+# Static fallbacks
+ACCOUNT_MAP = {
+    "googledrive": "ca_o8MBz95otipG",
+    "googlesheets": "ca_P5SOLNnc27rB",
+    "youtube": "ca_1OmWac-CLp-J",  # Dedicated authorized Google Cloud OAuth client
+    "gmail": "ca_xLZdOBRwIJLf"
+}
+USER_ID = "pg-test-e25f369f-1415-44b6-9106-f2d6e6f0b793"
+
+# Dynamically discover active accounts and user_id from Composio
+try:
+    resp = client.connected_accounts.list()
+    items = getattr(resp, "items", resp)
+    print(f"Discovered {len(items)} accounts from Composio.")
+    for a in items:
+        aid = getattr(a, "id", None) or (a.get("id") if isinstance(a, dict) else None)
+        tk = getattr(a, "toolkit", None) or (a.get("toolkit") if isinstance(a, dict) else None)
+        tk_slug = getattr(tk, "slug", tk) or (tk.get("slug") if isinstance(tk, dict) else tk)
+        uid = getattr(a, "user_id", None) or (a.get("user_id") if isinstance(a, dict) else None)
+        status = getattr(a, "status", None) or (a.get("status") if isinstance(a, dict) else None)
+        if status == "ACTIVE" and tk_slug and aid:
+            ACCOUNT_MAP[str(tk_slug).lower()] = aid
+            if uid:
+                USER_ID = uid
+    # Enforce dedicated YouTube OAuth account ca_1OmWac-CLp-J to use private project quota
+    ACCOUNT_MAP["youtube"] = "ca_1OmWac-CLp-J"
+    print("Active accounts mapped:", ACCOUNT_MAP)
+    print("Active user_id:", USER_ID)
+except Exception as e:
+    print("Dynamic discovery warning (using static fallback):", e)
 
 SHEET_ID = "1UTtsb83Od3wM-d5B6er9fdpczS38roLGzMjygJqSsac" # Paradox Vault Master Sheet
 CHANNEL_ID = "UCSk1CAYFu0rcvtjlvZBVMPQ"
