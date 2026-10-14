@@ -49,7 +49,10 @@ try:
         uid = getattr(a, "user_id", None) or (a.get("user_id") if isinstance(a, dict) else None)
         status = getattr(a, "status", None) or (a.get("status") if isinstance(a, dict) else None)
         if status == "ACTIVE" and tk_slug and aid:
-            ACCOUNT_MAP[str(tk_slug).lower()] = aid
+            # Only set if not already locked or if matching personal channel
+            tk_name = str(tk_slug).lower()
+            if tk_name not in ACCOUNT_MAP:
+                ACCOUNT_MAP[tk_name] = aid
             if uid:
                 USER_ID = uid
     print("Active accounts mapped:", ACCOUNT_MAP)
@@ -58,12 +61,22 @@ except Exception as e:
     print("Dynamic discovery warning (using static fallback):", e)
 
 def execute_tool(slug, arguments, **kwargs):
-    # kwargs.setdefault("dangerously_skip_version_check", True)
     kwargs.setdefault("user_id", USER_ID)
     toolkit = TOOLKIT_MAP.get(slug)
     if toolkit and toolkit in ACCOUNT_MAP:
         kwargs.setdefault("connected_account_id", ACCOUNT_MAP[toolkit])
-    return client.tools.execute(slug=slug, arguments=arguments, **kwargs)
+    kwargs["dangerously_skip_version_check"] = True
+    if hasattr(client, "tools") and hasattr(client.tools, "execute"):
+        try:
+            return client.tools.execute(slug=slug, arguments=arguments, **kwargs)
+        except TypeError:
+            kwargs.pop("dangerously_skip_version_check", None)
+            return client.tools.execute(slug=slug, arguments=arguments, **kwargs)
+    elif hasattr(client, "actions") and hasattr(client.actions, "execute"):
+        kwargs.pop("dangerously_skip_version_check", None)
+        return client.actions.execute(action=slug, params=arguments, **kwargs)
+    else:
+        raise RuntimeError("No valid execution method found on Composio client")
 
 def get_data(res):
     if isinstance(res, dict):
@@ -170,7 +183,7 @@ print("Creating Instagram media container...")
 container_res = execute_tool(
     slug="INSTAGRAM_POST_IG_USER_MEDIA",
     arguments={
-        "ig_user_id": "me",
+        "ig_user_id": "28540742058917254",
         "video_url": s3url,
         "caption": caption_ig,
         "media_type": "REELS"
@@ -187,7 +200,7 @@ print(f"Container created successfully. ID: {container_id}. Publishing...")
 publish_res = execute_tool(
     slug="INSTAGRAM_POST_IG_USER_MEDIA_PUBLISH",
     arguments={
-        "ig_user_id": "me",
+        "ig_user_id": "28540742058917254",
         "creation_id": container_id,
         "max_wait_seconds": 180
     }
