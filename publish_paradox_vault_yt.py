@@ -19,7 +19,7 @@ client = Composio(api_key=COMPOSIO_API_KEY)
 ACCOUNT_MAP = {
     "googledrive": "googledrive_balija-colley",   # rizwanshakir2025@gmail.com (FINAL videos)
     "googlesheets": "googlesheets_agency-broo",   # shakirrizwan01@gmail.com
-    "youtube": "ca_1OmWac-CLp-J",             # Paradox Vault YouTube (@paradoxvaultmedia / UCSk1CAYFu0rcvtjlvZBVMPQ)
+    "youtube": "youtube_pariti-boo",             # Paradox Vault YouTube (@paradoxvaultmedia / UCSk1CAYFu0rcvtjlvZBVMPQ)
     "gmail": "gmail_afoul-borean"                 # shakirrizwan01@gmail.com
 }
 
@@ -36,24 +36,11 @@ SHEET_ID = "1UTtsb83Od3wM-d5B6er9fdpczS38roLGzMjygJqSsac" # Paradox Vault Master
 CHANNEL_ID = "UCSk1CAYFu0rcvtjlvZBVMPQ"
 
 def execute_tool(slug, arguments, **kwargs):
+    kwargs.setdefault("dangerously_skip_version_check", True)
     toolkit = TOOLKIT_MAP.get(slug)
-    call_kwargs = {}
     if toolkit and toolkit in ACCOUNT_MAP:
-        call_kwargs["connected_account_id"] = ACCOUNT_MAP[toolkit]
-    if toolkit == "youtube":
-        call_kwargs["user_id"] = "pg-test-e25f369f-1415-44b6-9106-f2d6e6f0b793"
-        call_kwargs["dangerously_skip_version_check"] = True
-    if hasattr(client, "tools") and hasattr(client.tools, "execute"):
-        try:
-            return client.tools.execute(slug=slug, arguments=arguments, **call_kwargs)
-        except TypeError:
-            call_kwargs.pop("dangerously_skip_version_check", None)
-            return client.tools.execute(slug=slug, arguments=arguments, **call_kwargs)
-    elif hasattr(client, "actions") and hasattr(client.actions, "execute"):
-        call_kwargs.pop("dangerously_skip_version_check", None)
-        return client.actions.execute(action=slug, params=arguments, **call_kwargs)
-    else:
-        raise RuntimeError("No valid execution method found on Composio client")
+        kwargs.setdefault("connected_account_id", ACCOUNT_MAP[toolkit])
+    return client.tools.execute(slug=slug, arguments=arguments, **kwargs)
 
 def get_data(res):
     if isinstance(res, dict):
@@ -67,7 +54,7 @@ def main():
     time_str = now_ist.strftime("%H:%M")
 
     print("==================================================")
-    print("ðŸ”´ PARADOX VAULT â€” YOUTUBE SHORTS CLOUD RUNNER")
+    print("???? PARADOX VAULT ??? YOUTUBE SHORTS CLOUD RUNNER")
     print(f"Time: {now_ist.strftime('%Y-%m-%d %H:%M:%S')} IST ({today_str} {time_str})")
     print("==================================================")
 
@@ -76,7 +63,7 @@ def main():
         slug="GOOGLESHEETS_VALUES_GET",
         arguments={
             "spreadsheet_id": SHEET_ID,
-            "range": "Sheet1!A2:T15"
+            "range": "Sheet1!A2:T35"
         }
     )
     rows = get_data(sheet_res).get("values", [])
@@ -89,7 +76,7 @@ def main():
     for idx, arg in enumerate(sys.argv):
         if arg == "--row" and idx + 1 < len(sys.argv):
             target_row_idx = int(sys.argv[idx + 1])
-            target_row = rows[target_row_idx - 2]
+            target_row_idx = rows[target_row_idx - 2]
             print(f"Targeting row {target_row_idx} via manual CLI flag.")
             break
 
@@ -137,12 +124,12 @@ def main():
     if not s3key and not s3url:
         print(f"Error fetching download info from Google Drive: {drive_res}")
         sys.exit(1)
-    print("âœ… Download stream verified.")
+    print("??? Download stream verified.")
 
     # 3. Upload Short to YouTube
     print("Uploading YouTube Short to @ParadoxVaultMedia...")
     yt_args = {
-        "title": f"{title} â³ #Shorts",
+        "title": f"{title} ??? #Shorts",
         "description": f"{caption_yt}\n\n#ParadoxVault #Shorts #Facts #Documentary",
         "tags": tags,
         "categoryId": "27",  # Education
@@ -161,10 +148,10 @@ def main():
     yt_video_id = (yt_data.get("video") or {}).get("id") or yt_data.get("id") or (yt_data.get("response_data") or {}).get("id")
 
     if not yt_video_id:
-        print(f"âŒ YouTube upload failed: {yt_res}")
+        print(f"??? YouTube upload failed: {yt_res}")
         sys.exit(1)
 
-    print(f"ðŸŽ‰ Successfully uploaded to YouTube! Video ID: {yt_video_id}")
+    print(f"???? Successfully uploaded to YouTube! Video ID: {yt_video_id}")
     yt_url = f"https://www.youtube.com/shorts/{yt_video_id}"
     print(f"Short URL: {yt_url}")
 
@@ -180,7 +167,7 @@ def main():
                     "textOriginal": first_comment.strip()
                 }
             )
-            print("âœ… Discussion comment posted successfully.")
+            print("??? Discussion comment posted successfully.")
         except Exception as e:
             print(f"Warning: Failed to post discussion comment: {e}")
 
@@ -195,7 +182,7 @@ def main():
             "values": [["published", str(yt_video_id)]]
         }
     )
-    print("âœ… Spreadsheet row status updated.")
+    print("??? Spreadsheet row status updated.")
 
     # 6. Send Drop Alert Email
     try:
@@ -203,14 +190,14 @@ def main():
             slug="GMAIL_SEND_EMAIL",
             arguments={
                 "recipient_email": "shakirrizwan01@gmail.com",
-                "subject": f"ðŸ”´ PARADOX VAULT YOUTUBE SHORT IS LIVE: {title}",
-                "body": f"""<h2>ðŸŽ‰ Paradox Vault YouTube Short is LIVE!</h2>
+                "subject": f"???? PARADOX VAULT YOUTUBE SHORT IS LIVE: {title}",
+                "body": f"""<h2>???? Paradox Vault YouTube Short is LIVE!</h2>
 <p><strong>Title:</strong> {title}</p>
 <p><strong>Category:</strong> {category}</p>
 <p><strong>YouTube Short:</strong> <a href="{yt_url}">{yt_url}</a></p>
 <p><strong>YouTube Video ID:</strong> {yt_video_id}</p>
 <p style="color: #c62828; font-size: 16px;">
-ðŸ‘‰ <strong>Action Required:</strong> Open YouTube Studio or the Short on your phone, find the comment below, and tap <strong>Pin</strong>:
+???? <strong>Action Required:</strong> Open YouTube Studio or the Short on your phone, find the comment below, and tap <strong>Pin</strong>:
 </p>
 <blockquote style="background:#ffebee; padding:10px; border-left:4px solid #c62828;">
 <em>"{first_comment}"</em>
@@ -219,7 +206,7 @@ def main():
                 "is_html": True
             }
         )
-        print("âœ… Alert email sent to shakirrizwan01@gmail.com.")
+        print("??? Alert email sent to shakirrizwan01@gmail.com.")
     except Exception as e:
         print(f"Alert email note: {e}")
 
