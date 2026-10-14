@@ -1,1 +1,212 @@
-aW1wb3J0IG9zCmltcG9ydCBzeXMKaW1wb3J0IHRpbWUKZnJvbSBkYXRldGltZSBpbXBvcnQgZGF0ZXRpbWUKaW1wb3J0IHpvbmVpbmZvCmZyb20gY29tcG9zaW8gaW1wb3J0IENvbXBvc2lvCgojID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQojIENPTkZJR1VSQVRJT04gJiBBQ0NPVU5UIE1BUFBJTkdTCiMgPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CkNPTVBPU0lPX0FQSV9LRVkgPSBvcy5lbnZpcm9uLmdldCgiQ09NUE9TSU9fQVBJX0tFWSIpCmlmIG5vdCBDT01QT1NJT19BUElfS0VZOgogICAgcHJpbnQoIkVycm9yOiBDT01QT1NJT19BUElfS0VZIGVudmlyb25tZW50IHZhcmlhYmxlIGlzIG1pc3NpbmcuIikKICAgIHN5cy5leGl0KDEpCgpjbGllbnQgPSBDb21wb3NpbyhhcGlfa2V5PUNPTVBPU0lPX0FQSV9LRVkpCgpBQ0NPVU5UX01BUCA9IHsKICAgICJnb29nbGVkcml2ZSI6ICJnb29nbGVkcml2ZV9iYWxpamEtY29sbGV5IiwgICAjIHJpendhbnNoYWtpcjIwMjVAZ21haWwuY29tIChGSU5BTCB2aWRlb3MpCiAgICAiZ29vZ2xlc2hlZXRzIjogImdvb2dsZXNoZWV0c19hZ2VuY3ktYnJvbyIsICAgIyBzaGFraXJyaXp3YW4wMUBnbWFpbC5jb20KICAgICJpbnN0YWdyYW0iOiAiaW5zdGFncmFtX29zc2lmeS1yZXF1aXQiLCAgICAgICAjIFBhcmFkb3ggVmF1bHQgSW5zdGFncmFtIChAcGFyYWRveHZhdWx0bWVkaWEpCiAgICAiZ21haWwiOiAiZ21haWxfYWZvdWwtYm9yZWFuIiAgICAgICAgICAgICAgICAgIyBzaGFraXJyaXp3YW4wMUBnbWFpbC5jb20KfQoKVE9PTEtJVF9NQVAgPSB7CiAgICAiR09PR0xFRFJJVkVfRE9XTkxPQURfRklMRSI6ICJnb29nbGVkcml2ZSIsCiAgICAiR09PR0xFU0hFRVRTX1ZBTFVFU19HRVQiOiAiZ29vZ2xlc2hlZXRzIiwKICAgICJHT09HTEVTSEVFVFNfVkFMVUVTX1VQREFURSI6ICJnb29nbGVzaGVldHMiLAogICAgIklOU1RBR1JBTV9QT1NUX0lHX1VTRVJfTUVESUEiOiAiaW5zdGFncmFtIiwKICAgICJJTlNUQUdSQU1fUE9TVF9JR19VU0VSX01FRElBX1BVQkxJU0giOiAiaW5zdGFncmFtIiwKICAgICJHTUFJTF9TRU5EX0VNQUlMIjogImdtYWlsIgp9CgpTSEVFVF9JRCA9ICIxVVR0c2I4M09kM3dNLWQ1QjZlcjlmZHBjelMzOHJvTEd6TWp5Z0pxU3NhYyIgIyBQYXJhZG94IFZhdWx0IFNoZWV0CgpkZWYgZXhlY3V0ZV90b29sKHNsdWcsIGFyZ3VtZW50cywgKiprd2FyZ3MpOgogICAga3dhcmdzLnNldGRlZmF1bHQoImRhbmdlcm91c2x5X3NraXBfdmVyc2lvbl9jaGVjayIsIFRydWUpCiAgICB0b29sa2l0ID0gVE9PTEtJVF9NQVAuZ2V0KHNsdWcpCiAgICBpZiB0b29sa2l0IGFuZCB0b29sa2l0IGluIEFDQ09VTlRfTUFQOgogICAgICAgIGt3YXJncy5zZXRkZWZhdWx0KCJjb25uZWN0ZWRfYWNjb3VudF9pZCIsIEFDQ09VTlRfTUFQW3Rvb2xraXRdKQogICAgcmV0dXJuIGNsaWVudC50b29scy5leGVjdXRlKHNsdWc9c2x1ZywgYXJndW1lbnRzPWFyZ3VtZW50cywgKiprd2FyZ3MpCgpkZWYgZ2V0X2RhdGEocmVzKToKICAgIGlmIGlzaW5zdGFuY2UocmVzLCBkaWN0KToKICAgICAgICByZXR1cm4gcmVzLmdldCgiZGF0YSIsIHJlcykKICAgIHJldHVybiBnZXRhdHRyKHJlcywgImRhdGEiLCByZXMpCgpkZWYgbWFpbigpOgogICAga29sa2F0YV90eiA9IHpvbmVpbmZvLlpvbmVJbmZvKCJBc2lhL0tvbGthdGEiKQogICAgbm93X2lzdCA9IGRhdGV0aW1lLm5vdyhrb2xrYXRhX3R6KQogICAgdG9kYXlfc3RyID0gbm93X2lzdC5zdHJmdGltZSgiJVktJW0tJWQiKQogICAgdGltZV9zdHIgPSBub3dfaXN0LnN0cmZ0aW1lKCIlSDolTSIpCgogICAgcHJpbnQoIj09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09IikKICAgIHByaW50KCI/Pz8/IFBBUkFET1ggVkFVTFQgPz8/IElOU1RBR1JBTSBSRUVMUyBDTE9VRCBSVU5ORVIiKQogICAgcHJpbnQoZiJUaW1lOiB7bm93X2lzdC5zdHJmdGltZSgnJVktJW0tJWQgJUg6JU06JVMnKX0gSVNUICh7dG9kYXlfc3RyfSB7dGltZV9zdHJ9KSIpCiAgICBwcmludCgiPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0iKQoKICAgICMgMS4gRmV0Y2ggU2NoZWR1bGUgZnJvbSBHb29nbGUgU2hlZXQKICAgIHNoZWV0X3JlcyA9IGV4ZWN1dGVfdG9vbCgKICAgICAgICBzbHVnPSJHT09HTEVTSEVFVFNfVkFMVUVTX0dFVCIsCiAgICAgICAgYXJndW1lbnRzPXsKICAgICAgICAgICAgInNwcmVhZHNoZWV0X2lkIjogU0hFRVRfSUQsCiAgICAgICAgICAgICJyYW5nZSI6ICJTaGVldDEhQTI6VDM1IgogICAgICAgIH0KICAgICkKICAgIHJvd3MgPSBnZXRfZGF0YShzaGVldF9yZXMpLmdldCgidmFsdWVzIiwgW10pCiAgICBwcmludChmIkxvYWRlZCB7bGVuKHJvd3MpfSBzbG90cyBmcm9tIHNwcmVhZHNoZWV0LiIpCgogICAgdGFyZ2V0X3JvdyA9IE5vbmUKICAgIHRhcmdldF9yb3dfaWR4ID0gTm9uZQoKICAgICMgQ2hlY2sgZm9yIENMSSBvdmVycmlkZSBmbGFnOiBweXRob24gcHVibGlzaF9wYXJhZG94X3ZhdWx0X2lnLnB5IC0tcm93IDIKICAgIGZvciBpZHgsIGFyZyBpbiBlbnVtZXJhdGUoc3lzLmFyZ3YpOgogICAgICAgIGlmIGFyZyA9PSAiLS1yb3ciIGFuZCBpZHggKyAxIDwgbGVuKHN5cy5hcmd2KToKICAgICAgICAgICAgdGFyZ2V0X3Jvd19pZHggPSBpbnQoc3lzLmFyZ3ZbaWR4ICsgMV0pCiAgICAgICAgICAgIHRhcmdldF9yb3cgPSByb3dzW3RhcmdldF9yb3dfaWR4IC0gMl0KICAgICAgICAgICAgcHJpbnQoZiJUYXJnZXRpbmcgcm93IHt0YXJnZXRfcm93X2lkeH0gdmlhIG1hbnVhbCBDTEkgZmxhZy4iKQogICAgICAgICAgICBicmVhawoKICAgIGlmIG5vdCB0YXJnZXRfcm93OgogICAgICAgIGZvciBpZHgsIHJvdyBpbiBlbnVtZXJhdGUoc3lzLmFyZ3YpOgogICAgICAgICAgICBwb3N0X2RhdGUgPSByb3dbMV0gaWYgbGVuKHJvdykgPiAxIGVsc2UgIiIKICAgICAgICAgICAgaWdfc3RhdHVzID0gcm93WzE0XSBpZiBsZW4ocm93KSA+IDE0IGVsc2UgInBlbmRpbmciCgogICAgICAgICAgICBpZiBwb3N0X2RhdGUgPT0gdG9kYXlfc3RyIGFuZCBpZ19zdGF0dXMuc3RyaXAoKS5sb3dlcigpID09ICJwZW5kaW5nIjoKICAgICAgICAgICAgICAgIHRhcmdldF9yb3cgPSByb3cKICAgICAgICAgICAgICAgIHRhcmdldF9yb3dfaWR4ID0gaWR4ICsgMgogICAgICAgICAgICAgICAgYnJlYWsKCiAgICBpZiBub3QgdGFyZ2V0X3JvdzoKICAgICAgICBwcmludChmIk5vIHBlbmRpbmcgSW5zdGFncmFtIFJlZWxzIGZvdW5kIGZvciB0b2RheSAoe3RvZGF5X3N0cn0pLiBFeGl0aW5nIGNsZWFubHkuIikKICAgICAgICBzeXMuZXhpdCgwKQoKICAgIHBvc3Rfbm8gPSB0YXJnZXRfcm93WzBdCiAgICB0aXRsZSA9IHRhcmdldF9yb3dbNF0KICAgIGNhdGVnb3J5ID0gdGFyZ2V0X3Jvd1s1XQogICAgZHJpdmVfZmlsZV9pZCA9IHRhcmdldF9yb3dbNl0KICAgIGNhcHRpb25faWcgPSB0YXJnZXRfcm93WzhdCiAgICBmaXJzdF9jb21tZW50ID0gdGFyZ2V0X3Jvd1sxMV0gaWYgbGVuKHRhcmdldF9yb3cpID4gMTEgZWxzZSAiIgoKICAgIHByaW50KGYiXG4/Pz8/IExhdW5jaGluZyBTbG90ICN7cG9zdF9ub306ICd7dGl0bGV9JyBbe2NhdGVnb3J5fV0iKQogICAgcHJpbnQoZiJEcml2ZSBGaWxlIElEOiB7ZHJpdmVfZmlsZV9pZH0iKQoKICAgICMgMi4gQWNxdWlyZSBTMyBkaXJlY3QtZG93bmxvYWQgVVJMIGZyb20gR29vZ2xlIERyaXZlCiAgICBwcmludCgiRmV0Y2hpbmcgaGlnaC1zcGVlZCBTMyBkb3dubG9hZCBsaW5rIGZyb20gR29vZ2xlIERyaXZlLi4uIikKICAgIGRyaXZlX3JlcyA9IGV4ZWN1dGVfdG9vbCgKICAgICAgICBzbHVnPSJHT09HTEVEUklWRV9ET1dOTE9BRF9GSUxFIiwKICAgICAgICBhcmd1bWVudHM9eyJmaWxlSWQiOiBkcml2ZV9maWxlX2lkfQogICAgKQogICAgZHJpdmVfZGF0YSA9IGdldF9kYXRhKGRyaXZlX3JlcykKICAgIGRvd25sb2FkX2luZm8gPSBkcml2ZV9kYXRhLmdldCgiZG93bmxvYWRlZF9maWxlX2NvbnRlbnQiLCB7fSkKICAgIHMzdXJsID0gZG93bmxvYWRfaW5mby5nZXQoInMzdXJsIikKCgogICAgaWYgbm90IHMzdXJsOgogICAgICAgIHByaW50KGYiRXJyb3IgZmV0Y2hpbmcgZG93bmxvYWQgVVJMIGZyb20gR29vZ2xlIERyaXZlOiB7ZHJpdmVfcmVzfSIpCiAgICAgICAgc3lzLmV4aXQoMSkKICAgIHByaW50KCI/Pz8gRG93bmxvYWQgc3RyZWFtIHZlcmlmaWVkLiIpCgogICAgIyAzLiBDcmVhdGUgSW5zdGFncmFtIG1lZGlhIGNvbnRhaW5lcgogICAgcHJpbnQoIkNyZWF0aW5nIEluc3RhZ3JhbSBtZWRpYSBjb250YWluZXIgKEBwYXJhZG94dmF1bHRtZWRpYSkuLi4iKQogICAgY29udGFpbmVyX3JlcyA9IGV4ZWN1dGVfdG9vbCgKICAgICAgICBzbHVnPSJJTlNUQUdSQU1fUE9TVF9JR19VU0VSX01FRElBIiwKICAgICAgICBhcmd1bWVudHM9ewogICAgICAgICAgICAiaWdfdXNlcl9pZCI6ICIzOTE3MDg1NjQ4NTg5NDU5NSIsCiAgICAgICAgICAgICJ2aWRlb191cmwiOiBzM3VybCwKICAgICAgICAgICAgImNhcHRpb24iOiBjYXB0aW9uX2lnLAogICAgICAgICAgICAibWVkaWFfdHlwZSI6ICJSRUVMUyIKICAgICAgICB9CiAgICApCiAgICBjb250YWluZXJfaWQgPSBnZXRfZGF0YShjb250YWluZXJfcmVzKS5nZXQoImlkIikKICAgIGlmIG5vdCBjb250YWluZXJfaWQ6CiAgICAgICAgcHJpbnQoZiJFcnJvciBjcmVhdGluZyBJbnN0YWdyYW0gbWVkaWEgY29udGFpbmVyOiB7Y29udGFpbmVyX3Jlc30iKQogICAgICAgIHN5cy5leGl0KDEpCgogICAgcHJpbnQoZiJDb250YWluZXIgY3JlYXRlZCBzdWNjZXNzZnVsbHkgKHtjb250YWluZXJfaWR9KS4gV2FpdGluZyBmb3IgbWVkaWEgcHJvY2Vzc2luZy4uLiIpCiAgICB0aW1lLnNsZWVwKDEwKQoKICAgICMgNC4gUHVibGlzaCBJbnN0YWdyYW0gUmVlbAogICAgcHJpbnQoIlB1Ymxpc2hpbmcgUmVlbC4uLiIpCiAgICBwdWJsaXNoX3JlcyA9IGV4ZWN1dGVfdG9vbCgKICAgICAgICBzbHVnPSJJTlNUQUdSQU1fUE9TVF9JR19VU0VSX01FRElBX1BVQkxJU0giLAogICAgICAgIGFyZ3VtZW50cz17CiAgICAgICAgICAgICJpZ191c2VyX2lkIjogIjM5MTcwODU2NDg1ODk0NTk1IiwKICAgICAgICAgICAgImNyZWF0aW9uX2lkIjogY29udGFpbmVyX2lkLAogICAgICAgICAgICAibWF4X3dhaXRfc2Vjb25kcyI6IDE4MAogICAgICAgIH0KICAgICkKICAgIGlnX21lZGlhX2lkID0gZ2V0X2RhdGEocHVibGlzaF9yZXMpLmdldCgiaWQiKQogICAgaWYgbm90IGlnX21lZGlhX2lkOgogICAgICAgIHByaW50KGYiRXJyb3IgcHVibGlzaGluZyBJbnN0YWdyYW0gbWVkaWE6IHtwdWJsaXNoX3Jlc30iKQogICAgICAgIHN5cy5leGl0KDEpCgogICAgcHJpbnQoZiI/Pz8/IFN1Y2Nlc3NmdWxseSBwdWJsaXNoZWQgdG8gSW5zdGFncmFtISBNZWRpYSBJRDoge2lnX21lZGlhX2lkfSIpCgogICAgIyA1LiBVcGRhdGUgTWFzdGVyIEdvb2dsZSBTaGVldCBTdGF0dXMKICAgIHByaW50KGYiVXBkYXRpbmcgR29vZ2xlIFNoZWV0IFJvdyB7dGFyZ2V0X3Jvd19pZHh9Li4uIikKICAgIGV4ZWN1dGVfdG9vbCgKICAgICAgICBzbHVnPSJHT09HTEVTSEVFVFNfVkFMVUVTX1VQREFURSILAogICAgICAgIGFyZ3VtZW50cz17CiAgICAgICAgICAgICJzcHJlYWRzaGVldF9pZCI6IFNIRUVUX0lELAogICAgICAgICAgICAicmFuZ2UiOiBmIlNoZWV0MSFPe3RhcmdldF9yb3dfaWR4fTpQe3RhcmdldF9yb3dfaWR4fSIsCiAgICAgICAgICAgICJ2YWx1ZV9pbnB1dF9vcHRpb24iOiAiVVNFUl9FTlRFUkVEIiwKICAgICAgICAgICAgInZhbHVlcyI6IFtbInB1Ymxpc2hlZCIsIHN0cihpZ19tZWRpYV9pZCldXQogICAgICAgIH0KICAgICkKICAgIHByaW50KCI/Pz8gU3ByZWFkc2hlZXQgcm93IHN0YXR1cyB1cGRhdGVkLiIpCgogICAgIyA2LiBTZW5kIERyb3AgQWxlcnQgRW1haWwKICAgIHRyeToKICAgICAgICBleGVjdXRlX3Rvb2woCiAgICAgICAgICAgIHNsdWc9IkdNQUlMX1NFTkRfRU1BSUwiLAogICAgICAgICAgICBhcmd1bWVudHM9ewogICAgICAgICAgICAgICAgInJlY2lwaWVudF9lbWFpbCI6ICJzaGFraXJyaXp3YW4wMUBnbWFpbC5jb20iLAogICAgICAgICAgICAgICAgInN1YmplY3QiOiBmIj8/Pz8gUEFSQURPWCBWQVVMVCBJRyBEUk9QIElTIExJVkU6IHt0aXRsZX0iLAogICAgICAgICAgICAgICAgImJvZHkiOiBmIiIiPGgyPj8/Pz8gUGFyYWRveCBWYXVsdCBJbnN0YWdyYW0gUmVlbCBpcyBMSVZFITwvaDI+CjxwPjxzdHJvbmc+VGl0bGU6PC9zdHJvbmc+IHt0aXRsZX08L3A+CjxwPjxzdHJvbmc+Q2F0ZWdvcnk6PC9zdHJvbmc+IHtjYXRlZ29yeX08L3A+CjxwPjxzdHJvbmc+SW5zdGFncmFtIE1lZGlhIElEOjwvc3Ryb25nPiB7aWdfbWVkaWFfaWR9PC9wPgo8cCBzdHlsZT0iY29sb3I6ICM2YTFiOWE7IGZvbnQtc2l6ZTogMTZweDsiPgo/Pz8/IDxzdHJvbmc+QWN0aW9uIFJlcXVpcmVkOjwvc3Ryb25nPiBPcGVuIEluc3RhZ3JhbSBvbiB5b3VyIHBob25lLCBmaW5kIHRoZSBSZWVsLCBhbmQgcGluIHRoaXMgZGViYXRlIGNvbW1lbnQ6CjwvcD4KPGJsb2NrcXVvdGUgc3R5bGU9ImJhY2tncm91bmQ6I2YzZTVmNTsgcGFkZGluZzoxMHB4OyBib3JkZXItbGVmdDo0cHggc29saWQgIzhlMjRhYTsiPgo8ZW0+IntmaXJzdF9jb21tZW50fSI8L2VtPgo8L2Jsb2NrcXVvdGU+CiIiIiwKICAgICAgICAgICAgICAgICJpc19odG1sIjogVHJ1ZQogICAgICAgICAgICB9CiAgICAgICAgKQogICAgICAgIHByaW50KCI/Pz8gQWxlcnQgZW1haWwgc2VudCB0byBzaGFraXJyaXp3YW4wMUBnbWFpbC5jb20uIikKICAgIGV4Y2VwdCBFeGNlcHRpb24gYXMgZToKICAgICAgICBwcmludChmIkFsZXJ0IGVtYWlsIG5vdGU6IHtlfSIpCgogICAgcHJpbnQoIlxuV29ya2Zsb3cgY29tcGxldGVkIHN1Y2Nlc3NmdWxseS4iKQoKaWYgX19uYW1lX18gPT0gIl9fbWFpbl9fIjoKICAgIG1haW4oKQo=
+import os
+import sys
+import time
+from datetime import datetime
+import zoneinfo
+from composio import Composio
+
+# ==========================================
+# CONFIGURATION & ACCOUNT MAPPINGS
+# ==========================================
+COMPOSIO_API_KEY = os.environ.get("COMPOSIO_API_KEY")
+if not COMPOSIO_API_KEY:
+    print("Error: COMPOSIO_API_KEY environment variable is missing.")
+    sys.exit(1)
+
+client = Composio(api_key=COMPOSIO_API_KEY)
+
+USER_ID = "pg-test-e25f369f-1415-44b6-9106-f2d6e6f0b793"
+
+ACCOUNT_MAP = {
+    "googledrive": "googledrive_balija-colley",   # rizwanshakir2025@gmail.com (FINAL videos)
+    "googlesheets": "googlesheets_agency-broo",   # shakirrizwan01@gmail.com
+    "instagram": "instagram_ossify-requit",       # Paradox Vault Instagram (@paradoxvaultmedia)
+    "gmail": "gmail_afoul-borean"                 # shakirrizwan01@gmail.com
+}
+
+TOOLKIT_MAP = {
+    "GOOGLEDRIVE_DOWNLOAD_FILE": "googledrive",
+    "GOOGLESHEETS_VALUES_GET": "googlesheets",
+    "GOOGLESHEETS_VALUES_UPDATE": "googlesheets",
+    "INSTAGRAM_POST_IG_USER_MEDIA": "instagram",
+    "INSTAGRAM_POST_IG_USER_MEDIA_PUBLISH": "instagram",
+    "GMAIL_SEND_EMAIL": "gmail"
+}
+
+SHEET_ID = "1UTtsb83Od3wM-d5B6er9fdpczS38roLGzMjygJqSsac" # Paradox Vault Master Sheet
+
+def execute_tool(slug, arguments, **kwargs):
+    kwargs.setdefault("user_id", USER_ID)
+    kwargs.setdefault("dangerously_skip_version_check", True)
+    toolkit = TOOLKIT_MAP.get(slug)
+    if toolkit and toolkit in ACCOUNT_MAP:
+        kwargs.setdefault("connected_account_id", ACCOUNT_MAP[toolkit])
+    if hasattr(client, "tools") and hasattr(client.tools, "execute"):
+        try:
+            return client.tools.execute(slug=slug, arguments=arguments, **kwargs)
+        except TypeError:
+            kwargs.pop("dangerously_skip_version_check", None)
+            return client.tools.execute(slug=slug, arguments=arguments, **kwargs)
+    elif hasattr(client, "actions") and hasattr(client.actions, "execute"):
+        kwargs.pop("dangerously_skip_version_check", None)
+        return client.actions.execute(action=slug, params=arguments, **kwargs)
+    else:
+        raise RuntimeError("No valid execution method found on Composio client")
+
+def get_data(res):
+    if isinstance(res, dict):
+        return res.get("data", res)
+    return getattr(res, "data", res)
+
+def main():
+    kolkata_tz = zoneinfo.ZoneInfo("Asia/Kolkata")
+    now_ist = datetime.now(kolkata_tz)
+    today_str = now_ist.strftime("%Y-%m-%d")
+    time_str = now_ist.strftime("%H:%M")
+
+    print("==================================================")
+    print("PARADOX VAULT — INSTAGRAM REELS CLOUD RUNNER")
+    print(f"Time: {now_ist.strftime('%Y-%m-%d %H:%M:%S')} IST ({today_str} {time_str})")
+    print("==================================================")
+
+    # 1. Fetch Schedule from Google Sheet
+    sheet_res = execute_tool(
+        slug="GOOGLESHEETS_VALUES_GET",
+        arguments={
+            "spreadsheet_id": SHEET_ID,
+            "range": "Sheet1!A2:T35"
+        }
+    )
+    rows = get_data(sheet_res).get("values", [])
+    print(f"Loaded {len(rows)} slots from spreadsheet.")
+
+    target_row = None
+    target_row_idx = None
+
+    # Check for CLI override flag: python publish_paradox_vault_ig.py --row 4
+    for idx, arg in enumerate(sys.argv):
+        if arg == "--row" and idx + 1 < len(sys.argv):
+            target_row_idx = int(sys.argv[idx + 1])
+            target_row = rows[target_row_idx - 2]
+            print(f"Targeting row {target_row_idx} via manual CLI flag.")
+            break
+
+    if not target_row:
+        for idx, row in enumerate(rows):
+            post_date = row[1] if len(row) > 1 else ""
+            ig_status = row[14] if len(row) > 14 else "pending"
+
+            # Match today or any unfulfilled past backlog slot
+            if post_date and post_date <= today_str and ig_status.strip().lower() == "pending":
+                target_row = row
+                target_row_idx = idx + 2
+                print(f"Auto-selected due slot (Row {target_row_idx}, Date: {post_date}).")
+                break
+
+    if not target_row:
+        print(f"No pending Instagram Reels found for today or backlog ({today_str}). Exiting cleanly.")
+        sys.exit(0)
+
+    post_no = target_row[0]
+    title = target_row[4]
+    category = target_row[5]
+    drive_file_id = target_row[6]
+    caption_ig = target_row[8]
+    first_comment = target_row[11] if len(target_row) > 11 else ""
+
+    print(f"\nLaunching Slot #{post_no}: '{title}' [{category}]")
+    print(f"Drive File ID: {drive_file_id}")
+
+    # 2. Acquire S3 direct-download URL from Google Drive
+    print("Fetching high-speed S3 download link from Google Drive...")
+    drive_res = execute_tool(
+        slug="GOOGLEDRIVE_DOWNLOAD_FILE",
+        arguments={"fileId": drive_file_id}
+    )
+    drive_data = get_data(drive_res)
+    download_info = drive_data.get("downloaded_file_content", {})
+    s3url = download_info.get("s3url")
+
+    if not s3url:
+        print(f"Error fetching download URL from Google Drive: {drive_res}")
+        sys.exit(1)
+    print("Download stream verified.")
+
+    # 3. Create Instagram media container
+    print("Creating Instagram media container (@paradoxvaultmedia)...")
+    container_res = execute_tool(
+        slug="INSTAGRAM_POST_IG_USER_MEDIA",
+        arguments={
+            "ig_user_id": "39170856485894595",
+            "video_url": s3url,
+            "caption": caption_ig,
+            "media_type": "REELS"
+        }
+    )
+    container_id = get_data(container_res).get("id")
+    if not container_id:
+        print(f"Error creating Instagram media container: {container_res}")
+        sys.exit(1)
+
+    print(f"Container created successfully ({container_id}). Waiting for media processing...")
+    time.sleep(15)
+
+    # 4. Publish Instagram Reel
+    print("Publishing Reel...")
+    publish_res = execute_tool(
+        slug="INSTAGRAM_POST_IG_USER_MEDIA_PUBLISH",
+        arguments={
+            "ig_user_id": "39170856485894595",
+            "creation_id": container_id,
+            "max_wait_seconds": 180
+        }
+    )
+    ig_media_id = get_data(publish_res).get("id")
+    if not ig_media_id:
+        print(f"Error publishing Instagram media: {publish_res}")
+        sys.exit(1)
+
+    print(f"Successfully published to Instagram! Media ID: {ig_media_id}")
+
+    # 5. Update Master Google Sheet Status
+    print(f"Updating Google Sheet Row {target_row_idx}...")
+    execute_tool(
+        slug="GOOGLESHEETS_VALUES_UPDATE",
+        arguments={
+            "spreadsheet_id": SHEET_ID,
+            "range": f"Sheet1!O{target_row_idx}:P{target_row_idx}",
+            "value_input_option": "USER_ENTERED",
+            "values": [["published", str(ig_media_id)]]
+        }
+    )
+    print("Spreadsheet row status updated.")
+
+    # 6. Send Drop Alert Email
+    try:
+        execute_tool(
+            slug="GMAIL_SEND_EMAIL",
+            arguments={
+                "recipient_email": "shakirrizwan01@gmail.com",
+                "subject": f"PARADOX VAULT IG DROP IS LIVE: {title}",
+                "body": f"""<h2>Paradox Vault Instagram Reel is LIVE!</h2>
+<p><strong>Title:</strong> {title}</p>
+<p><strong>Category:</strong> {category}</p>
+<p><strong>Instagram Media ID:</strong> {ig_media_id}</p>
+<p style="color: #6a1b9a; font-size: 16px;">
+Action Required: Open Instagram on your phone, find the Reel, and pin this debate comment:
+</p>
+<blockquote style="background:#f3e5f5; padding:10px; border-left:4px solid #8e24aa;">
+<em>"{first_comment}"</em>
+</blockquote>
+""",
+                "is_html": True
+            }
+        )
+        print("Alert email sent to shakirrizwan01@gmail.com.")
+    except Exception as e:
+        print(f"Alert email note: {e}")
+
+    print("\nWorkflow completed successfully.")
+
+if __name__ == "__main__":
+    main()
