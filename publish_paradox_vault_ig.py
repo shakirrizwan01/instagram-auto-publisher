@@ -21,7 +21,7 @@ TOOLKIT_MAP = {
     "GOOGLESHEETS_VALUES_GET": "googlesheets",
     "GOOGLESHEETS_VALUES_UPDATE": "googlesheets",
     "INSTAGRAM_POST_IG_USER_MEDIA": "instagram",
-    "INSTAGRAM_POST_IG_USER_MEDIA_PUBLISH",
+    "INSTAGRAM_POST_IG_USER_MEDIA_PUBLISH": "instagram",
     "INSTAGRAM_POST_IG_MEDIA_COMMENTS": "instagram",
     "GMAIL_SEND_EMAIL": "gmail"
 }
@@ -56,7 +56,7 @@ try:
 except Exception as e:
     print("Dynamic discovery warning (using static fallback):", e)
 
-SHEET_ID = "1UTtsb83Od3wM-d5B6er9fdpczS38roLGzMjygJqSsac" # Paradox Vault Master Sheet
+SHEET_ID = "1UTtsb83Od3wM-d5B6er9fdpczS38roLGzMjygJqSsac"  # Paradox Vault Master Sheet
 
 def execute_tool(slug, arguments, **kwargs):
     kwargs.setdefault("user_id", USER_ID)
@@ -71,7 +71,7 @@ def execute_tool(slug, arguments, **kwargs):
             kwargs.pop("dangerously_skip_version_check", None)
             return client.tools.execute(slug=slug, arguments=arguments, **kwargs)
     elif hasattr(client, "actions") and hasattr(client.actions, "execute"):
-        kwargs.pop("dangercusly_skip_version_check", None)
+        kwargs.pop("dangerously_skip_version_check", None)
         return client.actions.execute(action=slug, params=arguments, **kwargs)
     else:
         raise RuntimeError("No valid execution method found on Composio client")
@@ -87,10 +87,10 @@ def main():
     today_str = now_ist.strftime("%Y-%m-%d")
     time_str = now_ist.strftime("%H:%M")
 
-    print("===================================================")
+    print("==================================================")
     print("PARADOX VAULT -- INSTAGRAM REELS CLOUD RUNNER")
     print(f"Time: {now_ist.strftime('%Y-%m-%d %H:%M:%S')} IST ({today_str} {time_str})")
-    print("===================================================")
+    print("==================================================")
 
     # 1. Fetch Schedule from Google Sheet
     sheet_res = execute_tool(
@@ -214,13 +214,37 @@ def main():
             "spreadsheet_id": SHEET_ID,
             "range": f"Sheet1!O{target_row_idx}:P{target_row_idx}",
             "value_input_option": "USER_ENTERED",
-            (˜[Y\ÈˆÖÈœX›\ÚY‹İŠY×ÛYYXWÚY
-WWBˆBˆ
-Bˆš[
-”Ü™XYÚY]›İÈİ]\È\]YˆŠB‚ˆÈ‹ˆÙ[™›Ü[\[XZ[ˆN‚ˆ^Xİ]WİÛÛ
-ˆÛYÏH‘ÓPRSÔÑS‘ÑSPRS‹ˆ\™İ[Y[Ï^Âˆœ™XÚ\Y[Ù[XZ[ˆœÚZÚ\œš^Ø[ŒPÛXZ[˜ÛÛH‹ˆœİXš™Xİˆˆ”TQÖUSQÈ“ÔTÈU‘Nˆİ]_H‹ˆ˜›ÙHˆˆˆˆ”\˜YŞ˜][[œİYÜ˜[H™Y[\ÈU‘HOÚ‚İ›Û™Ï•]NÜİ›Û™Ïˆİ]_OÜ‚İ›Û™ÏØ]YÛÜNÜİ›Û™ÏˆØØ]YÛÜ_OÜ‚İ›Û™Ï’[œİYÜ˜[HYYXHQÜİ›Û™ÏˆÚY×ÛYYXWÚYOÜ‚İ[OH˜ÛÛÜˆÍ˜LXXNÈ›Û\Ú^™NˆMœÈ‚Xİ[Ûˆ™\]Z\™YˆÜ[ˆ[œİYÜ˜[HÛˆ[İ\ˆÛ™Kš[™H™Y[[™[ˆ\ÈX˜]HÛÛ[Y[‚Ü‚›ØÚÜ][İHİ[OH˜˜XÚÙÜ›İ[™ˆÙŒÙMYNÈY[™ÎŒLÈ›Ü™\‹[YÛÛYÎLXNÈ‚[OˆÙš\œİØÛÛ[Y[HÙ[O‚Ø›ØÚÜ][İO‚ˆˆˆ‹ˆš\×Ú[ˆYBˆBˆ
-Bˆš[
-[\[XZ[Ù[ÈÚZÚ\œš^Ø[ŒPÛXZ[˜ÛÛKˆŠBˆ^Ù\^Ù\[Ûˆ\ÈN‚ˆš[
-ˆ[\[XZ[›İNˆÙ_HŠB‚ˆš[
-—•ÛÜšÙ›İÈÛÛ\]YİXØÙ\ÜÙ[KˆŠB‚šYˆ×Û˜[YW×ÈOH—×ÛXZ[—×È‚ˆXZ[Š
-B
+            "values": [["published", str(ig_media_id)]]
+        }
+    )
+    print("Spreadsheet row status updated.")
+
+    # 6. Send Drop Alert Email
+    try:
+        execute_tool(
+            slug="GMAIL_SEND_EMAIL",
+            arguments={
+                "recipient_email": "shakirrizwan01@gmail.com",
+                "subject": f"PARADOX VAULT IG DROP IS LIVE: {title}",
+                "body": f"""<h2>Paradox Vault Instagram Reel is LIVE!</h2>
+<p><strong>Title:</strong> {title}</p>
+<p><strong>Category:</strong> {category}</p>
+<p><strong>Instagram Media ID:</strong> {ig_media_id}</p>
+<p style="color: #6a1b9a; font-size: 16px;">
+Action Required: Open Instagram on your phone, find the Reel, and pin this debate comment:
+</p>
+<blockquote style="background:#f3e5f5; padding:10px; border-left:4px solid #8e24aa;">
+<em>"{first_comment}"</em>
+</blockquote>
+""",
+                "is_html": True
+            }
+        )
+        print("Alert email sent to shakirrizwan01@gmail.com.")
+    except Exception as e:
+        print(f"Alert email note: {e}")
+
+    print("\nWorkflow completed successfully.")
+
+if __name__ == "__main__":
+    main()
