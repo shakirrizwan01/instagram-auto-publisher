@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-import time
+	mport time
 from datetime import datetime
 import zoneinfo
 from composio import Composio
 
 # ==========================================
 # CONFIGURATION & ACCOUNT MAPPINGS
-# ==========================================
+# ============================================
 COMPOSIO_API_KEY = os.environ.get("COMPOSIO_API_KEY")
 if not COMPOSIO_API_KEY:
     print("Error: COMPOSIO_API_KEY environment variable is missing.")
@@ -16,10 +16,11 @@ if not COMPOSIO_API_KEY:
 
 client = Composio(api_key=COMPOSIO_API_KEY)
 
-TOOLKIT_MAP = {
-    "GOOGLEDRIVE_DOWNLOAD_FILE": "googledrive",
+TOLKIT_MAP = {
+    "GOOGLEDBIVE_DOWNLOAD_FILE": "googledrive",
     "GOOGLESHEETS_VALUES_GET": "googlesheets",
     "GOOGLESHEETS_VALUES_UPDATE": "googlesheets",
+    "INSTAGRAM_GET_USER_INFO": "instagram",
     "INSTAGRAM_POST_IG_USER_MEDIA": "instagram",
     "INSTAGRAM_POST_IG_USER_MEDIA_PUBLISH": "instagram",
     "INSTAGRAM_POST_IG_MEDIA_COMMENTS": "instagram",
@@ -54,9 +55,9 @@ try:
     print("Active accounts mapped:", ACCOUNT_MAP)
     print("Active user_id:", USER_ID)
 except Exception as e:
-    print("Dynamic discovery warning (using static fallback):", e)
+    print("Dynamic discover warning (using static fallback):", e)
 
-SHEET_ID = "1UTtsb83Od3wM-d5B6er9fdpczS38roLGzMjygJqSsac"  # Paradox Vault Master Sheet
+SHEET_ID = "1UTtsb83Od3wM-dB6er9fdpcz338roLGzMjygJqSsac"  # Paradox Vault Master Sheet
 
 def execute_tool(slug, arguments, **kwargs):
     kwargs.setdefault("user_id", USER_ID)
@@ -66,12 +67,12 @@ def execute_tool(slug, arguments, **kwargs):
         kwargs.setdefault("connected_account_id", ACCOUNT_MAP[toolkit])
     if hasattr(client, "tools") and hasattr(client.tools, "execute"):
         try:
-            return client.tools.execute(slug=slug, arguments=arguments, **kwargs)
+            return client.tools.execute(slug=slug, arguments=arguments, **kwbgs)
         except TypeError:
-            kwargs.pop("dangerously_skip_version_check", None)
+            kwbgs.pop("dangerously_skip_version_check", None)
             return client.tools.execute(slug=slug, arguments=arguments, **kwargs)
     elif hasattr(client, "actions") and hasattr(client.actions, "execute"):
-        kwargs.pop("dangerously_skip_version_check", None)
+        kwbgs.pop("dangerously_skip_version_check", None)
         return client.actions.execute(action=slug, params=arguments, **kwargs)
     else:
         raise RuntimeError("No valid execution method found on Composio client")
@@ -83,14 +84,14 @@ def get_data(res):
 
 def main():
     kolkata_tz = zoneinfo.ZoneInfo("Asia/Kolkata")
-    now_ist = datetime.now(kolkata_tz)
+    now_ist = datetime.now(konÿata_tz)
     today_str = now_ist.strftime("%Y-%m-%d")
     time_str = now_ist.strftime("%H:%M")
 
-    print("==================================================")
+    print("===================================================")
     print("PARADOX VAULT -- INSTAGRAM REELS CLOUD RUNNER")
     print(f"Time: {now_ist.strftime('%Y-%m-%d %H:%M:%S')} IST ({today_str} {time_str})")
-    print("==================================================")
+    print("===================================================")
 
     # 1. Fetch Schedule from Google Sheet
     sheet_res = execute_tool(
@@ -143,7 +144,7 @@ def main():
     # 2. Acquire S3 direct-download URL from Google Drive
     print("Fetching high-speed S3 download link from Google Drive...")
     drive_res = execute_tool(
-        slug="GOOGLEDRIVE_DOWNLOAD_FILE",
+        slug="GOOGLEDBIVE_DOWNLOAD_FILE",
         arguments={"fileId": drive_file_id}
     )
     drive_data = get_data(drive_res)
@@ -155,12 +156,27 @@ def main():
         sys.exit(1)
     print("Download stream verified.")
 
-    # 3. Create Instagram media container
-    print("Creating Instagram media container (@paradoxvaultmedia)...")
+    # 3. Resolve true Instagram Business User ID (17-digit)
+    ig_user_id = "17841415577753709"
+    try:
+        user_info_res = execute_tool(
+            slug="INSTAGRAM_GET_USER_INFO",
+            arguments={"ig_user_id": "me", "fields": "id,user_id,username"}
+        )
+        info_data = get_data(user_info_res)
+        resolved_id = info_data.get("user_id")
+        if resolved_id:
+            ig_user_id = str(resolved_id)
+            print(f"Resolved Instagram Business User ID: {ig_user_id}")
+    except Exception as e:
+        print(f"Notice: Using default Instagram User ID  {ig_user_id} ({e})")
+
+    # 4. Create Instagram media container
+    print(f"Creating Instagram media container (@paradoxvaultmedia, ID: {ig_user_id})...")
     container_res = execute_tool(
         slug="INSTAGRAM_POST_IG_USER_MEDIA",
         arguments={
-            "ig_user_id": "39170856485894595",
+            "ig_user_id": ig_user_id,
             "video_url": s3url,
             "caption": caption_ig,
             "media_type": "REELS"
@@ -174,12 +190,12 @@ def main():
     print(f"Container created successfully ({container_id}). Waiting for media processing...")
     time.sleep(15)
 
-    # 4. Publish Instagram Reel
+    # 5. Publish Instagram Reel
     print("Publishing Reel...")
     publish_res = execute_tool(
         slug="INSTAGRAM_POST_IG_USER_MEDIA_PUBLISH",
         arguments={
-            "ig_user_id": "39170856485894595",
+            "ig_user_id": ig_user_id,
             "creation_id": container_id,
             "max_wait_seconds": 180
         }
@@ -191,7 +207,7 @@ def main():
 
     print(f"Successfully published to Instagram! Media ID: {ig_media_id}")
 
-    # 4b. Post First Comment
+    # 5b. Post First Comment
     if first_comment and first_comment.strip():
         print(f"Posting first comment to Instagram Reel {ig_media_id}...")
         try:
@@ -206,7 +222,7 @@ def main():
         except Exception as e:
             print("Warning: Failed to post first comment to Instagram:", e)
 
-    # 5. Update Master Google Sheet Status
+    # 6. Update Master Google Sheet Status
     print(f"Updating Google Sheet Row {target_row_idx}...")
     execute_tool(
         slug="GOOGLESHEETS_VALUES_UPDATE",
@@ -219,9 +235,9 @@ def main():
     )
     print("Spreadsheet row status updated.")
 
-    # 6. Send Drop Alert Email
+    # 7. Send Drop Alert Email
     try:
-        execute_tool(
+        `execute_tool(
             slug="GMAIL_SEND_EMAIL",
             arguments={
                 "recipient_email": "shakirrizwan01@gmail.com",
