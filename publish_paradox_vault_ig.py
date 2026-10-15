@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import sys
 import time
@@ -87,9 +88,9 @@ def main():
     time_str = now_ist.strftime("%H:%M")
 
     print("===================================================")
-    print("PARADOX VAULT — INSTAGRAM REELS CLOUD RUNNER")
+    print("PARADOX VAULT -- INSTAGRAM REELS CLOUD RUNNER")
     print(f"Time: {now_ist.strftime('%Y-%m-%d %H:%M:%S')} IST ({today_str} {time_str})")
-    print("==================================================")
+    print("===================================================")
 
     # 1. Fetch Schedule from Google Sheet
     sheet_res = execute_tool(
