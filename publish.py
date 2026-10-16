@@ -25,47 +25,22 @@ TOOLKIT_MAP = {
     "YOUTUBE_VIDEOS_INSERT": "youtube"
 }
 
-# Explicit connected account IDs in the Project (fallback)
+# Explicit connected account IDs for Personal Project (Rizwan Shakir)
 ACCOUNT_MAP = {
-    "gmail": "ca_xLZdOBRwIJLf",
-    "googlesheets": "ca_P5SOLNnc27rB",
-    "googledrive": "googledrive_eyey-perch",
-    "instagram": "ca_dAL2HtP-8D0G",
-    "facebook": "ca_CRcdLr-bArog",
-    "youtube": "ca_pUUHcPX5WySk"
+    "gmail": "gmail_afoul-borean",                # shakirrizwan01@gmail.com
+    "googlesheets": "googlesheets_agency-broo",   # shakirrizwan01@gmail.com
+    "googledrive": "googledrive_eyey-perch",       # rizwanshakir2018@gmail.com (catalog tracks)
+    "instagram": "instagram_looter-enlife",       # @riz1shakir (ID: 28540742058917254)
+    "facebook": "facebook_even-glut",             # Rizwan Shakir FB Page
+    "youtube": "youtube_fluter-parse"             # @rizwanshakir (UCQ_a_AFbEVx57k4pGn6MnlQ)
 }
 
-USER_ID = "pg-test-e25f369f-1415-44b6-9106-f2d6e6f0b793"
-
-# Dynamically discover active accounts from Composio
-try:
-    resp = client.connected_accounts.list()
-    items = getattr(resp, "items", resp)
-    print(f"Discovered {len(items)} accounts from Composio.")
-    for a in items:
-        aid = getattr(a, "id", None) or (a.get("id") if isinstance(a, dict) else None)
-        tk = getattr(a, "toolkit", None) or (a.get("toolkit") if isinstance(a, dict) else None)
-        tk_slug = getattr(tk, "slug", tk) or (tk.get("slug") if isinstance(tk, dict) else tk)
-        uid = getattr(a, "user_id", None) or (a.get("user_id") if isinstance(a, dict) else None)
-        status = getattr(a, "status", None) or (a.get("status") if isinstance(a, dict) else None)
-        if status == "ACTIVE" and tk_slug and aid:
-            # Only set if not already locked or if matching personal channel
-            tk_name = str(tk_slug).lower()
-            if tk_name not in ACCOUNT_MAP:
-                ACCOUNT_MAP[tk_name] = aid
-            if uid:
-                USER_ID = uid
-    print("Active accounts mapped:", ACCOUNT_MAP)
-    print("Active user_id:", USER_ID)
-except Exception as e:
-    print("Dynamic discovery warning (using static fallback):", e)
-
 def execute_tool(slug, arguments, **kwargs):
-    kwargs.setdefault("user_id", USER_ID)
+    kwargs.setdefault("dangerously_skip_version_check", True)
     toolkit = TOOLKIT_MAP.get(slug)
     if toolkit and toolkit in ACCOUNT_MAP:
         kwargs.setdefault("connected_account_id", ACCOUNT_MAP[toolkit])
-    kwargs["dangerously_skip_version_check"] = True
+    # Do not pass user_id as it triggers 404 for global accounts
     if hasattr(client, "tools") and hasattr(client.tools, "execute"):
         try:
             return client.tools.execute(slug=slug, arguments=arguments, **kwargs)
@@ -119,37 +94,43 @@ time_str = now_ist.strftime("%H:%M")
 
 print(f"Running Instagram Auto Publisher at {now_ist} (Date: {today_str}, Time: {time_str} IST)")
 
+# 1. Fetch Schedule from Google Sheet
 sheet_res = execute_tool(
     slug="GOOGLESHEETS_VALUES_GET",
     arguments={
         "spreadsheet_id": SHEET_ID,
-        "range": "Sheet1!A2:W57"
+        "range": "Sheet1!A2:W60"
     }
 )
 sheet_data = get_data(sheet_res)
 rows = sheet_data.get("values", [])
-print(f"Total rows fetched: {len(rows)}")
+print(f"Loaded {len(rows)} catalog items from spreadsheet.")
 
 target_row = None
 target_row_idx = None
 
-for idx, row in enumerate(rows):
-    post_date = row[2] if len(row) > 2 else ""
-    post_time = row[4] if len(row) > 4 else ""
-    ig_status = row[21] if len(row) > 21 else "pending"
-
-    # Only publish if date is today and scheduled time has arrived (or backlog from past date)
-    is_due = False
-    if ig_status.strip().lower() == "pending":
-        if post_date == today_str and time_str >= post_time:
-            is_due = True
-        elif post_date < today_str and post_date != "":
-            is_due = True
-
-    if is_due:
-        target_row = row
-        target_row_idx = idx + 2
+# Check for CLI override flag: python publish.py --row 8
+for idx, arg in enumerate(sys.argv):
+    if arg == "--row" and idx + 1 < len(sys.argv):
+        target_row_idx = int(sys.argv[idx + 1])
+        target_row = rows[target_row_idx - 2]
+        print(f"Targeting row {target_row_idx} via manual CLI flag.")
         break
+
+if not target_row:
+    for idx, row in enumerate(rows):
+        row_idx = idx + 2
+        date_ist = row[2] if len(row) > 2 else ""
+        fb_status = row[19] if len(row) > 19 else ""
+        ig_status = row[21] if len(row) > 21 else ""
+
+        # Match today or any unfulfilled past drop
+        if date_ist and date_ist <= today_str:
+            if ig_status.strip().lower() != "published":
+                target_row = row
+                target_row_idx = row_idx
+                print(f"Found post to publish! Row {row_idx}: Post {row[0]} — '{row[7]}'")
+                break
 
 if not target_row:
     print(f"No pending Instagram post due for today ({today_str} {time_str} IST). Exiting cleanly.")
@@ -279,6 +260,6 @@ try:
     )
     print("Email notification sent successfully.")
 except Exception as e:
-    print("Email notification failed (non-critical):", e)
+    print(f"Error sending email: {e}")
 
-print("Workflow completed successfully.")
+print("Drop automation run complete.")
