@@ -25,22 +25,63 @@ TOOLKIT_MAP = {
     "YOUTUBE_VIDEOS_INSERT": "youtube"
 }
 
-# Explicit connected account IDs for Personal Project (Rizwan Shakir)
-ACCOUNT_MAP = {
-    "gmail": "gmail_afoul-borean",                # shakirrizwan01@gmail.com
-    "googlesheets": "googlesheets_agency-broo",   # shakirrizwan01@gmail.com
-    "googledrive": "googledrive_eyey-perch",       # rizwanshakir2018@gmail.com (catalog tracks)
-    "instagram": "instagram_looter-enlife",       # @riz1shakir (ID: 28540742058917254)
-    "facebook": "facebook_even-glut",             # Rizwan Shakir FB Page
-    "youtube": "youtube_fluter-parse"             # @rizwanshakir (UCQ_a_AFbEVx57k4pGn6MnlQ)
+# Dedicated connected account IDs & User IDs for Personal Project (Rizwan Shakir)
+ACCOUNT_MAP = {}
+ACCOUNT_USER_MAP = {}
+DEFAULT_USER_ID = "default"
+
+try:
+    resp = client.connected_accounts.list()
+    items = getattr(resp, "items", resp)
+    print(f"Discovered {len(items)} accounts from Composio.")
+    for a in items:
+        aid = getattr(a, "id", None) or (a.get("id") if isinstance(a, dict) else None)
+        tk = getattr(a, "toolkit", None) or (a.get("toolkit") if isinstance(a, dict) else None)
+        tk_slug = getattr(tk, "slug", tk) or (tk.get("slug") if isinstance(tk, dict) else tk)
+        uid = getattr(a, "user_id", None) or (a.get("user_id") if isinstance(a, dict) else None)
+        status = getattr(a, "status", None) or (a.get("status") if isinstance(a, dict) else None)
+        print(f"Discovered: {tk_slug} -> aid={aid}, uid={uid}, status={status}")
+        if status == "ACTIVE" and tk_slug and aid:
+            tk_name = str(tk_slug).lower()
+            if aid:
+                ACCOUNT_USER_MAP[aid] = uid
+            # Preferred accounts for Rizwan Shakir personal channel
+            if "looter-enlife" in aid or "riz1shakir" in str(a):
+                ACCOUNT_MAP["instagram"] = aid
+            elif "eyey-perch" in aid or "rizwanshakir2018" in str(a):
+                ACCOUNT_MAP["googledrive"] = aid
+            elif "fluter-parse" in aid or "rizwanshakir" in str(a):
+                ACCOUNT_MAP["youtube"] = aid
+            elif tk_name not in ACCOUNT_MAP:
+                ACCOUNT_MAP[tk_name] = aid
+            if uid:
+                DEFAULT_USER_ID = uid
+    print("Active accounts mapped:", ACCOUNT_MAP)
+except Exception as e:
+    print("Dynamic discovery warning:", e)
+
+# Fallbacks if discovery missed anything
+FALLBACKS = {
+    "gmail": "gmail_afoul-borean",
+    "googlesheets": "googlesheets_agency-broo",
+    "googledrive": "googledrive_eyey-perch",
+    "instagram": "instagram_looter-enlife",
+    "facebook": "facebook_even-glut",
+    "youtube": "youtube_fluter-parse"
 }
+for k, v in FALLBACKS.items():
+    if k not in ACCOUNT_MAP:
+        ACCOUNT_MAP[k] = v
 
 def execute_tool(slug, arguments, **kwargs):
     kwargs.setdefault("dangerously_skip_version_check", True)
     toolkit = TOOLKIT_MAP.get(slug)
     if toolkit and toolkit in ACCOUNT_MAP:
-        kwargs.setdefault("connected_account_id", ACCOUNT_MAP[toolkit])
-    # Do not pass user_id as it triggers 404 for global accounts
+        acc_id = ACCOUNT_MAP[toolkit]
+        kwargs["connected_account_id"] = acc_id
+        uid = ACCOUNT_USER_MAP.get(acc_id) or DEFAULT_USER_ID
+        if uid:
+            kwargs["user_id"] = uid
     if hasattr(client, "tools") and hasattr(client.tools, "execute"):
         try:
             return client.tools.execute(slug=slug, arguments=arguments, **kwargs)
@@ -160,14 +201,16 @@ if not s3url:
 
 print("Video download URL acquired successfully.")
 
-print("Creating Instagram media container...")
+print("Creating Instagram media container (with thumb_offset=3000 to avoid black cover)...")
 container_res = execute_tool(
     slug="INSTAGRAM_POST_IG_USER_MEDIA",
     arguments={
         "ig_user_id": "28540742058917254",
         "video_url": s3url,
         "caption": caption_ig,
-        "media_type": "REELS"
+        "media_type": "REELS",
+        "thumb_offset": 3000,
+        "share_to_feed": True
     }
 )
 container_data = get_data(container_res)
