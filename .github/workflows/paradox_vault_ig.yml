@@ -1,13 +1,15 @@
 name: Paradox Vault Instagram Reels Publisher
 
+# PAUSED: Schedule paused by user request
+# on:
+#   schedule:
+#     # Tuesday & Friday: 18:00 IST (12:30 UTC)
+#     - cron: '30 12 * * 2,5'
+#     # Thursday (The Ramp-Up): 19:00 IST (13:30 UTC)
+#     - cron: '30 13 * * 4'
+#     # Saturday (Maximum Reach): 17:00 IST (11:30 UTC)
+#     - cron: '30 11 * * 6'
 on:
-  schedule:
-    # Tuesday & Friday: 18:00 IST (12:30 UTC)
-    - cron: '30 12 * * 2,5'
-    # Thursday (The Ramp-Up): 19:00 IST (13:30 UTC)
-    - cron: '30 13 * * 4'
-    # Saturday (Maximum Reach): 17:00 IST (11:30 UTC)
-    - cron: '30 11 * * 6'
   workflow_dispatch:
     inputs:
       target_row:
