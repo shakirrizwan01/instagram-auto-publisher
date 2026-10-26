@@ -1,258 +1,432 @@
+#!/usr/bin/env python3
+"""
+DRAFT — Paradox Vault YouTube publisher for GitHub Actions.
+PREPARATION ONLY. Do not push this file to GitHub, do not run it against
+the live sheet, and do not dispatch any workflow until the cutover
+checklist in CUTOVER_CHECKLIST.md is approved by the user.
+
+What this draft changes vs the old public script
+(publish_paradox_vault_yt.py on main):
+  * Matches the CURRENT master sheet layout (see SHEET COLUMNS below),
+    not the old A2:T35 / "pending" layout.
+  * Stage (Unlisted) and flip (public) are separate actions, mirroring
+    ~/workspace/pv_publisher/publish.py. The old script published
+    everything straight to public.
+  * Long-form vs Shorts is handled correctly: the " #Shorts" suffix is
+    added ONLY for shortform titles. Titles containing "documentary" or
+    "longform" are uploaded verbatim, with no suffix.
+  * Description is the sheet caption (col J) verbatim. No hashtags are
+    appended by this script.
+  * Tags are the sheet tags (col K) split on commas only, matching the
+    current publisher. The 2026-10-26 staging failure was a Composio
+    400 because tags were passed as a single string; tags MUST be a list.
+  * A missing video ID is a failure: the row is left "scheduled", a
+    timestamped error is written to col T, and the script exits non-zero.
+    It never writes "staged"/"published" without a real video ID.
+  * NO first/pinned comment, NO follow-up action on a published post,
+    NO alert email. Those were in the old script and are removed.
+  * NO hardcoded Composio API key and NO hardcoded connected-account IDs.
+    The API key comes only from the COMPOSIO_API_KEY environment variable
+    (GitHub secret). Connected accounts are discovered at runtime from
+    Composio; optional per-toolkit overrides are env vars only
+    (COMPOSIO_GOOGLEDRIVE_ACCOUNT_ID, COMPOSIO_GOOGLESHEETS_ACCOUNT_ID,
+    COMPOSIO_YOUTUBE_ACCOUNT_ID). If an account cannot be discovered,
+    the script fails clearly instead of silently using a stale ID.
+  * Sheet writes use value_input_option RAW, matching the current
+    publisher, not USER_ENTERED.
+
+SHEET COLUMNS (master sheet, Sheet1; 0-based index in brackets):
+  E title [4], G drive_file_id [6], H caption_fb [7], I caption_ig [8],
+  J caption_yt [9], K tags_yt [10],
+  M fb status [12], N fb id [13], O ig status [14], P ig id [15],
+  Q yt status [16], R yt id [17], S timestamp [18], T notes [19],
+  U yt date [20], V ig date [21], W fb date [22],
+  X ig catchup date [23], Y fb catchup date [24].
+  Status values today: "scheduled" / "staged" / "published"
+  (never "pending" — that was the old layout).
+  Row map: post #0 -> sheet row 21; #1-19 -> n+1; #n>=20 -> n+2.
+
+USAGE (after cutover approval only):
+  python publish_paradox_vault_yt.py --action stage --post-no 12
+  python publish_paradox_vault_yt.py --action flip  --post-no 12
+  python publish_paradox_vault_yt.py --action stage --all-due [--date YYYY-MM-DD]
+  python publish_paradox_vault_yt.py --action stage --post-no 12 --dry-run
+
+VERIFICATION LIMIT (honest, read before cutover):
+  Composio's upload/publish responses return an ID but do not echo the
+  full title/description/caption back. This script therefore verifies
+  (a) a non-empty video ID was returned, (b) the sheet row holds that
+  ID with the correct status, and (c) it prints the exact title,
+  description and tags it submitted. The full live read-back
+  (YouTube Studio Content list: title, description, tags, visibility)
+  is a required step in the test plan in MIGRATION_NOTES.md before any
+  cutover approval — it is not something this script can prove alone.
+"""
+
+import argparse
 import os
 import sys
-import time
+import zoneinfo
 from datetime import datetime
 from urllib.parse import urlparse
-import zoneinfo
+
 from composio import Composio
 
-# ==========================================
-# CONFIGURATION & ACCOUNT DISCOVERY
-# ==========================================
-COMPOSIO_API_KEY = os.environ.get("COMPOSIO_API_KEY")
-if not COMPOSIO_API_KEY:
-    print("Error: COMPOSIO_API_KEY environment variable is missing.")
-    sys.exit(1)
+SHEET_ID = os.environ.get(
+    "PV_SHEET_ID", "1UTtsb83Od3wM-d5B6er9fdpczS38roLGzMjygJqSsac"
+)
+SHEET_RANGE = "Sheet1!A2:Y150"
+DRY = False
 
-client = Composio(api_key=COMPOSIO_API_KEY)
+
+def log(*a):
+    print("[pv-yt]", *a, flush=True)
+
+
+def ist_now():
+    return datetime.now(zoneinfo.ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M")
+
+
+def today_ist():
+    return datetime.now(zoneinfo.ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d")
+
+
+# ---------------------------------------------------------------- Composio
+def build_client():
+    api_key = os.environ.get("COMPOSIO_API_KEY")
+    if not api_key:
+        print("Error: COMPOSIO_API_KEY environment variable is missing.")
+        sys.exit(1)
+    return Composio(api_key=api_key)
+
+
+CLIENT = None
+ACCOUNT_MAP = {}
+USER_ID = None
 
 TOOLKIT_MAP = {
     "GOOGLEDRIVE_DOWNLOAD_FILE": "googledrive",
     "GOOGLESHEETS_VALUES_GET": "googlesheets",
     "GOOGLESHEETS_VALUES_UPDATE": "googlesheets",
     "YOUTUBE_MULTIPART_UPLOAD_VIDEO": "youtube",
-    "YOUTUBE_POST_COMMENT": "youtube",
-    "GMAIL_SEND_EMAIL": "gmail"
+    "YOUTUBE_UPDATE_VIDEO": "youtube",
 }
 
-# Static fallbacks
-ACCOUNT_MAP = {
-    "googledrive": "ca_o8MBz95otipG",
-    "googlesheets": "ca_P5SOLNnc27rB",
-    "youtube": "ca_1OmWac-CLp-J",  # Dedicated authorized Google Cloud OAuth client
-    "gmail": "ca_xLZdOBRwIJLf"
+ENV_ACCOUNT_OVERRIDE = {
+    "googledrive": "COMPOSIO_GOOGLEDRIVE_ACCOUNT_ID",
+    "googlesheets": "COMPOSIO_GOOGLESHEETS_ACCOUNT_ID",
+    "youtube": "COMPOSIO_YOUTUBE_ACCOUNT_ID",
 }
-USER_ID = "pg-test-e25f369f-1415-44b6-9106-f2d6e6f0b793"
 
-# Dynamically discover active accounts and user_id from Composio
-try:
-    resp = client.connected_accounts.list()
-    items = getattr(resp, "items", resp)
-    print(f"Discovered {len(items)} accounts from Composio.")
-    for a in items:
-        aid = getattr(a, "id", None) or (a.get("id") if isinstance(a, dict) else None)
-        tk = getattr(a, "toolkit", None) or (a.get("toolkit") if isinstance(a, dict) else None)
-        tk_slug = getattr(tk, "slug", tk) or (tk.get("slug") if isinstance(tk, dict) else tk)
-        uid = getattr(a, "user_id", None) or (a.get("user_id") if isinstance(a, dict) else None)
-        status = getattr(a, "status", None) or (a.get("status") if isinstance(a, dict) else None)
-        if status == "ACTIVE" and tk_slug and aid:
-            ACCOUNT_MAP[str(tk_slug).lower()] = aid
-            if uid:
+
+def discover_accounts():
+    """Discover ACTIVE connected accounts at runtime. No static fallbacks.
+
+    If a toolkit has no ACTIVE account, it is absent from ACCOUNT_MAP and
+    execute_tool() fails with a clear message instead of using a stale ID.
+    """
+    global USER_ID
+    for toolkit, env_name in ENV_ACCOUNT_OVERRIDE.items():
+        override = os.environ.get(env_name)
+        if override:
+            ACCOUNT_MAP[toolkit] = override
+    try:
+        resp = CLIENT.connected_accounts.list()
+        items = getattr(resp, "items", resp)
+        for a in items:
+            aid = getattr(a, "id", None) or (a.get("id") if isinstance(a, dict) else None)
+            tk = getattr(a, "toolkit", None) or (a.get("toolkit") if isinstance(a, dict) else None)
+            tk_slug = getattr(tk, "slug", tk) or (tk.get("slug") if isinstance(tk, dict) else tk)
+            uid = getattr(a, "user_id", None) or (a.get("user_id") if isinstance(a, dict) else None)
+            status = getattr(a, "status", None) or (a.get("status") if isinstance(a, dict) else None)
+            if status == "ACTIVE" and tk_slug and aid:
+                # Env overrides win over discovery, so never overwrite one.
+                ACCOUNT_MAP.setdefault(str(tk_slug).lower(), aid)
+            if uid and not USER_ID:
                 USER_ID = uid
-    # Enforce dedicated YouTube OAuth account ca_1OmWac-CLp-J to use private project quota
-    ACCOUNT_MAP["youtube"] = "ca_1OmWac-CLp-J"
-    print("Active accounts mapped:", ACCOUNT_MAP)
-    print("Active user_id:", USER_ID)
-except Exception as e:
-    print("Dynamic discovery warning (using static fallback):", e)
+    except Exception as e:  # noqa: BLE001 - discovery failure is non-fatal only
+        # if every toolkit needed is already covered by an env override.
+        print("Account discovery warning:", e)
+    env_uid = os.environ.get("COMPOSIO_USER_ID")
+    if env_uid:
+        USER_ID = env_uid
+    log("Active accounts discovered for toolkits:", sorted(ACCOUNT_MAP.keys()))
 
-SHEET_ID = "1UTtsb83Od3wM-d5B6er9fdpczS38roLGzMjygJqSsac" # Paradox Vault Master Sheet
-CHANNEL_ID = "UCSk1CAYFu0rcvtjlvZBVMPQ"
 
-def execute_tool(slug, arguments, **kwargs):
-    kwargs.setdefault("user_id", USER_ID)
-    kwargs.setdefault("dangerously_skip_version_check", True)
+def execute_tool(slug, arguments):
     toolkit = TOOLKIT_MAP.get(slug)
+    if toolkit and toolkit not in ACCOUNT_MAP:
+        raise RuntimeError(
+            f"No ACTIVE Composio account discovered for toolkit '{toolkit}' "
+            f"(tool {slug}). Refusing to use a stale hardcoded account ID."
+        )
+    kwargs = {"dangerously_skip_version_check": True}
+    if USER_ID:
+        kwargs["user_id"] = USER_ID
     if toolkit and toolkit in ACCOUNT_MAP:
-        kwargs.setdefault("connected_account_id", ACCOUNT_MAP[toolkit])
-    if hasattr(client, "tools") and hasattr(client.tools, "execute"):
+        kwargs["connected_account_id"] = ACCOUNT_MAP[toolkit]
+    if hasattr(CLIENT, "tools") and hasattr(CLIENT.tools, "execute"):
         try:
-            return client.tools.execute(slug=slug, arguments=arguments, **kwargs)
+            return CLIENT.tools.execute(slug=slug, arguments=arguments, **kwargs)
         except TypeError:
             kwargs.pop("dangerously_skip_version_check", None)
-            return client.tools.execute(slug=slug, arguments=arguments, **kwargs)
-    elif hasattr(client, "actions") and hasattr(client.actions, "execute"):
+            return CLIENT.tools.execute(slug=slug, arguments=arguments, **kwargs)
+    if hasattr(CLIENT, "actions") and hasattr(CLIENT.actions, "execute"):
         kwargs.pop("dangerously_skip_version_check", None)
-        return client.actions.execute(action=slug, params=arguments, **kwargs)
-    else:
-        raise RuntimeError("No valid execution method found on Composio client")
+        return CLIENT.actions.execute(action=slug, params=arguments, **kwargs)
+    raise RuntimeError("No valid execution method found on Composio client")
+
 
 def get_data(res):
     if isinstance(res, dict):
         return res.get("data", res)
     return getattr(res, "data", res)
 
-def main():
-    kolkata_tz = zoneinfo.ZoneInfo("Asia/Kolkata")
-    now_ist = datetime.now(kolkata_tz)
-    today_str = now_ist.strftime("%Y-%m-%d")
-    time_str = now_ist.strftime("%H:%M")
 
-    print("==================================================")
-    print("PARADOX VAULT — YOUTUBE SHORTS CLOUD RUNNER")
-    print(f"Time: {now_ist.strftime('%Y-%m-%d %H:%M:%S')} IST ({today_str} {time_str})")
-    print("==================================================")
+def response_failed(res):
+    """True when a Composio wrapper explicitly reports failure."""
+    if isinstance(res, dict):
+        if res.get("successful") is False:
+            return True
+        inner = res.get("response", {})
+        if isinstance(inner, dict) and inner.get("successful") is False:
+            return True
+    return False
 
-    # 1. Fetch Schedule from Google Sheet
-    sheet_res = execute_tool(
-        slug="GOOGLESHEETS_VALUES_GET",
-        arguments={
-            "spreadsheet_id": SHEET_ID,
-            "range": "Sheet1!A2:T35"
-        }
+
+# ---------------------------------------------------------------- Sheet
+def sheet_row_for_post_no(n):
+    if n == 0:
+        return 21
+    if n < 20:
+        return n + 1
+    return n + 2
+
+
+def post_no_for_sheet_row(r):
+    if r == 21:
+        return 0
+    if r <= 20:
+        return r - 1
+    return r - 2
+
+
+def fetch_rows():
+    res = execute_tool(
+        "GOOGLESHEETS_VALUES_GET",
+        {"spreadsheet_id": SHEET_ID, "range": SHEET_RANGE},
     )
-    rows = get_data(sheet_res).get("values", [])
-    print(f"Loaded {len(rows)} slots from spreadsheet.")
+    rows = get_data(res).get("values", [])
+    padded = []
+    for row in rows:
+        padded.append(list(row) + [""] * (25 - len(row)))
+    return padded
 
-    target_row = None
-    target_row_idx = None
 
-    # Check for CLI override flag: python publish_paradox_vault_yt.py --row 4
-    for idx, arg in enumerate(sys.argv):
-        if arg == "--row" and idx + 1 < len(sys.argv):
-            target_row_idx = int(sys.argv[idx + 1])
-            target_row = rows[target_row_idx - 2]
-            print(f"Targeting row {target_row_idx} via manual CLI flag.")
-            break
+def row_by_sheet_row(rows, sheet_row):
+    idx = sheet_row - 2
+    if idx < 0 or idx >= len(rows):
+        raise SystemExit(f"Sheet row {sheet_row} is outside fetched range {SHEET_RANGE}")
+    return rows[idx]
 
-    if not target_row:
-        for idx, row in enumerate(rows):
-            post_date = row[1] if len(row) > 1 else ""
-            yt_status = row[16] if len(row) > 16 else "pending"
 
-            # Match today or any unfulfilled past backlog slot
-            if post_date and post_date <= today_str and yt_status.strip().lower() == "pending":
-                target_row = row
-                target_row_idx = idx + 2
-                print(f"Auto-selected due slot (Row {target_row_idx}, Date: {post_date}).")
-                break
-
-    if not target_row:
-        print(f"No pending YouTube Shorts found for today or backlog ({today_str}). Exiting cleanly.")
-        sys.exit(0)
-
-    post_no = target_row[0]
-    title = target_row[4]
-    category = target_row[5]
-    drive_file_id = target_row[6]
-    caption_yt = target_row[9] if len(target_row) > 9 else ""
-    first_comment = target_row[11] if len(target_row) > 11 else ""
-
-    # Parse tags
-    raw_tags = target_row[10] if len(target_row) > 10 else ""
-    tags = [t.strip().lstrip('#') for t in raw_tags.replace(',', '\n').split('\n') if t.strip()]
-
-    print(f"\nLaunching Slot #{post_no}: '{title}' [{category}]")
-    print(f"Drive File ID: {drive_file_id}")
-
-    # 2. Acquire S3 direct-download key from Google Drive
-    print("Fetching high-speed S3 download link from Google Drive...")
-    drive_res = execute_tool(
-        slug="GOOGLEDRIVE_DOWNLOAD_FILE",
-        arguments={"fileId": drive_file_id}
-    )
-    drive_data = get_data(drive_res)
-    download_info = drive_data.get("downloaded_file_content", {})
-    s3key = download_info.get("s3key")
-    s3url = download_info.get("s3url")
-
-    # If s3key missing, extract path from s3url
-    if not s3key and s3url:
-        parsed = urlparse(s3url)
-        s3key = parsed.path.lstrip('/')
-
-    if not s3key and not s3url:
-        print(f"Error fetching download info from Google Drive: {drive_res}")
-        sys.exit(1)
-    print("Download stream verified.")
-
-    # 3. Upload Short to YouTube
-    print("Uploading YouTube Short to @ParadoxVaultMedia...")
-    yt_args = {
-        "title": f"{title} #Shorts",
-        "description": f"{caption_yt}\n\n#ParadoxVault #Shorts #Facts #Documentary",
-        "tags": tags,
-        "categoryId": "27",  # Education
-        "privacyStatus": "public",
-        "madeForKids": False,
-        "videoFile": {
-            "name": f"{title.replace(' ', '_')}.mp4",
-            "mimetype": "video/mp4",
-            "s3key": s3key
-        }
-    }
-
-    yt_res = execute_tool(
-        slug="YOUTUBE_MULTIPART_UPLOAD_VIDEO",
-        arguments=yt_args
-    )
-    yt_data = get_data(yt_res)
-    yt_video_id = (yt_data.get("video") or {}).get("id") or yt_data.get("id") or (yt_data.get("response_data") or {}).get("id")
-
-    if not yt_video_id:
-        print(f"YouTube upload failed: {yt_res}")
-        sys.exit(1)
-
-    print(f"Successfully uploaded to YouTube! Video ID: {yt_video_id}")
-    yt_url = f"https://www.youtube.com/shorts/{yt_video_id}"
-    print(f"Short URL: {yt_url}")
-
-    # 4. Post Pinned Discussion Comment
-    if first_comment and first_comment.strip():
-        print("Posting pinned discussion starter comment...")
-        try:
-            execute_tool(
-                slug="YOUTUBE_POST_COMMENT",
-                arguments={
-                    "videoId": str(yt_video_id),
-                    "channelId": CHANNEL_ID,
-                    "textOriginal": first_comment.strip()
-                }
-            )
-            print("Discussion comment posted successfully.")
-        except Exception as e:
-            print(f"Warning: Failed to post discussion comment: {e}")
-
-    # 5. Update Master Google Sheet Status
-    print(f"Updating Google Sheet Row {target_row_idx}...")
+def write_cell(sheet_row, col_letter, value):
+    if DRY:
+        log(f"DRY: would write {col_letter}{sheet_row} = {str(value)[:80]}")
+        return
     execute_tool(
-        slug="GOOGLESHEETS_VALUES_UPDATE",
-        arguments={
+        "GOOGLESHEETS_VALUES_UPDATE",
+        {
             "spreadsheet_id": SHEET_ID,
-            "range": f"Sheet1!Q{target_row_idx}:R{target_row_idx}",
-            "value_input_option": "USER_ENTERED",
-            "values": [["published", str(yt_video_id)]]
-        }
+            "range": f"Sheet1!{col_letter}{sheet_row}",
+            "value_input_option": "RAW",
+            "values": [[value]],
+        },
     )
-    print("Spreadsheet row status updated.")
 
-    # 6. Send Drop Alert Email
-    try:
-        execute_tool(
-            slug="GMAIL_SEND_EMAIL",
-            arguments={
-                "recipient_email": "shakirrizwan01@gmail.com",
-                "subject": f"PARADOX VAULT YOUTUBE SHORT IS LIVE: {title}",
-                "body": f"""<h2>Paradox Vault YouTube Short is LIVE!</h2>
-<p><strong>Title:</strong> {title}</p>
-<p><strong>Category:</strong> {category}</p>
-<p><strong>YouTube Short:</strong> <a href="{yt_url}">{yt_url}</a></p>
-<p><strong>YouTube Video ID:</strong> {yt_video_id}</p>
-<p style="color: #c62828; font-size: 16px;">
-Action Required: Open YouTube Studio or the Short on your phone, find the comment below, and tap <strong>Pin</strong>:
-</p>
-<blockquote style="background:#ffebee; padding:10px; border-left:4px solid #c62828;">
-<em>"{first_comment}"</em>
-</blockquote>
-""",
-                "is_html": True
-            }
+
+def write_error(sheet_row, action, message):
+    # Never let an error write mask the live status: col T only.
+    write_cell(sheet_row, "T", f"{ist_now()} yt/{action} FAILED: {str(message)[:120]}")
+
+
+def parse_post_no(cell):
+    text = (cell or "").strip().lstrip("#")
+    return int(text) if text.isdigit() else None
+
+
+def is_shortform(title):
+    return not any(k in title.lower() for k in ("documentary", "longform"))
+
+
+def yt_title_for(title):
+    if is_shortform(title):
+        return title if title.endswith("#Shorts") else f"{title} #Shorts"
+    return title
+
+
+def parse_tags(raw):
+    # Matches the current publisher: split on commas only, strip
+    # whitespace, drop empties. Do NOT strip a leading '#' here — the
+    # sheet tags are stored without it, and the old script's lstrip('#')
+    # is not needed to match current behaviour.
+    if isinstance(raw, list):
+        return [str(t).strip() for t in raw if str(t).strip()]
+    return [t.strip() for t in str(raw or "").split(",") if t.strip()]
+
+
+# ---------------------------------------------------------------- Actions
+def do_stage(row, sheet_row):
+    post_no = parse_post_no(row[0])
+    title = (row[4] or "").strip()
+    drive_id = (row[6] or "").strip()
+    cap_yt = row[9] or ""
+    tags = parse_tags(row[10])
+    yt_status = (row[16] or "").strip().lower()
+    if not title or not drive_id or drive_id.startswith("TBD"):
+        raise SystemExit(f"Row {sheet_row}: title or drive_file_id missing/TBD")
+    if not cap_yt.strip():
+        raise SystemExit(f"Row {sheet_row}: caption_yt (col J) is empty — refusing to stage without metadata")
+    if yt_status != "scheduled":
+        raise SystemExit(f"Row {sheet_row}: yt status is '{yt_status}', not 'scheduled' — refusing to stage")
+    yt_title = yt_title_for(title)
+    log(f"Staging post #{post_no} (row {sheet_row}): {yt_title}")
+    log(f"  shortform={is_shortform(title)} tags={tags}")
+    if DRY:
+        log("DRY: would upload Unlisted via YOUTUBE_MULTIPART_UPLOAD_VIDEO")
+        log(f"DRY: description (verbatim, {len(cap_yt)} chars) and tags as above")
+        return
+    drive_res = execute_tool(
+        "GOOGLEDRIVE_DOWNLOAD_FILE", {"fileId": drive_id}
+    )
+    dl = get_data(drive_res).get("downloaded_file_content", {})
+    s3key = dl.get("s3key")
+    s3url = dl.get("s3url")
+    if not s3key and s3url:
+        s3key = urlparse(s3url).path.lstrip("/")  # no leading slash: with it, storage 404s
+    name = dl.get("name") or f"{title}.mp4"
+    if not s3key:
+        write_error(sheet_row, "stage", f"no s3key/s3url from Drive download: {str(drive_res)[:200]}")
+        raise SystemExit("Drive download returned no s3key/s3url")
+    yt_res = execute_tool(
+        "YOUTUBE_MULTIPART_UPLOAD_VIDEO",
+        {
+            "title": yt_title,
+            "description": cap_yt,  # verbatim — nothing appended
+            "categoryId": "27",  # Education, as in the current publisher
+            "privacyStatus": "unlisted",
+            "madeForKids": False,
+            "tags": tags,  # MUST be a list; a string triggers Composio 400
+            "videoFile": {"name": name, "s3key": s3key, "mimetype": "video/mp4"},
+        },
+    )
+    data = get_data(yt_res)
+    vid = None
+    if isinstance(data, dict):
+        vid = (
+            data.get("video_id")
+            or data.get("id")
+            or (data.get("video") or {}).get("id")
+            or (data.get("response_data") or {}).get("id")
         )
-        print("Alert email sent to shakirrizwan01@gmail.com.")
-    except Exception as e:
-        print(f"Alert email note: {e}")
+    if response_failed(yt_res) or not vid:
+        write_error(sheet_row, "stage", f"no video id returned: {str(yt_res)[:300]}")
+        raise SystemExit("yt/stage FAILED: no video id returned; row left scheduled")
+    # Verification (see module docstring limit): ID + sheet write + the
+    # exact submitted payload printed here for the Studio read-back.
+    log(f"Staged, video id: {vid}")
+    log(f"Submitted title: {yt_title}")
+    log(f"Submitted description chars: {len(cap_yt)}; tags: {tags}")
+    write_cell(sheet_row, "R", vid)
+    write_cell(sheet_row, "Q", "staged")
+    url = (
+        f"https://www.youtube.com/shorts/{vid}"
+        if is_shortform(title)
+        else f"https://www.youtube.com/watch?v={vid}"
+    )
+    log(f"Staged URL (Unlisted until flip): {url}")
 
-    print("\nWorkflow completed successfully.")
+
+def do_flip(row, sheet_row):
+    post_no = parse_post_no(row[0])
+    vid = (row[17] or "").strip()
+    yt_status = (row[16] or "").strip().lower()
+    if not vid or vid.startswith("DRY"):
+        raise SystemExit(f"Row {sheet_row}: no staged video id in col R — refusing to flip")
+    if yt_status != "staged":
+        raise SystemExit(f"Row {sheet_row}: yt status is '{yt_status}', not 'staged' — refusing to flip")
+    log(f"Flipping post #{post_no} (row {sheet_row}) video {vid} to public")
+    if DRY:
+        log("DRY: would YOUTUBE_UPDATE_VIDEO privacyStatus=public")
+        return
+    res = execute_tool(
+        "YOUTUBE_UPDATE_VIDEO",
+        {"videoId": vid, "privacyStatus": "public"},
+    )
+    if response_failed(res):
+        raise SystemExit(f"yt/flip FAILED: {str(res)[:300]}")
+    write_cell(sheet_row, "Q", "published")
+    write_cell(sheet_row, "S", ist_now())
+    log(f"Flipped to public: {vid}")
+
+
+def main():
+    global CLIENT, DRY
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--action", required=True, choices=["stage", "flip"])
+    ap.add_argument("--post-no", type=int, default=None)
+    ap.add_argument("--sheet-row", type=int, default=None,
+                    help="Direct Sheet1 row number (overrides --post-no mapping)")
+    ap.add_argument("--all-due", action="store_true")
+    ap.add_argument("--date", default=None, help="YYYY-MM-DD, defaults to today IST")
+    ap.add_argument("--dry-run", action="store_true")
+    a = ap.parse_args()
+    DRY = a.dry_run
+    CLIENT = build_client()
+    discover_accounts()
+    datestr = a.date or today_ist()
+    rows = fetch_rows()
+
+    targets = []
+    if a.sheet_row is not None:
+        targets.append(a.sheet_row)
+    elif a.post_no is not None:
+        targets.append(sheet_row_for_post_no(a.post_no))
+    elif a.all_due:
+        want = "scheduled" if a.action == "stage" else "staged"
+        for idx, row in enumerate(rows):
+            sheet_row = idx + 2
+            if parse_post_no(row[0]) is None:
+                continue
+            if (row[20] or "").strip() == datestr and (row[16] or "").strip().lower() == want:
+                targets.append(sheet_row)
+        log(f"Due for yt/{a.action} on {datestr}: sheet rows {targets}")
+    else:
+        raise SystemExit("need --post-no, --sheet-row, or --all-due")
+
+    failed = 0
+    for sheet_row in targets:
+        row = row_by_sheet_row(rows, sheet_row)
+        try:
+            if a.action == "stage":
+                do_stage(row, sheet_row)
+            else:
+                do_flip(row, sheet_row)
+        except SystemExit as e:
+            print(f"FAILED row {sheet_row}: {e}", file=sys.stderr)
+            failed += 1
+        except Exception as e:  # noqa: BLE001 - report, do not mask the row
+            print(f"ERROR row {sheet_row}: {type(e).__name__}: {e}", file=sys.stderr)
+            if not DRY:
+                try:
+                    write_error(sheet_row, a.action, f"{type(e).__name__}: {e}")
+                except Exception:
+                    pass
+            failed += 1
+    if failed:
+        sys.exit(1)
+    log("done")
+
 
 if __name__ == "__main__":
     main()
